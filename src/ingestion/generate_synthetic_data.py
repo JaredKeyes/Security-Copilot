@@ -186,6 +186,8 @@ def generate_threat_intel():
         },
     ]
 
+    return pd.DataFrame(rows)
+
 def main():
     cloudtrail_events = generate_cloudtrail_events()
     guardduty_findings = generate_guardduty_findings(cloudtrail_events)

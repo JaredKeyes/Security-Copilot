@@ -1,0 +1,9 @@
+user_name,department,mfa_enabled,privilege_level,active_access_keys,last_password_change_days
+jsmith,Finance,False,low,1,174
+adoe,Finance,True,low,1,19
+mgarcia,Security,False,medium,1,6
+tnguyen,Security,True,medium,2,79
+rpatel,Engineering,True,low,2,47
+admin.user,IT,True,high,1,79
+svc-backup,Finance,False,medium,1,122
+svc-ci-cd,IT,True,high,2,124
