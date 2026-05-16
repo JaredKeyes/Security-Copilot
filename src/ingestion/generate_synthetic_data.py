@@ -162,3 +162,50 @@ def generate_iam_users():
     
     return pd.DataFrame(rows)
 
+def generate_threat_intel():
+    rows = [
+        {
+            "ip_address": "45.155.205.233",
+            "threat_type": "Known botnet infrastructure",
+            "confidence": "high",
+        },
+        {
+            "ip_address": "185.220.101.42",
+            "threat_type": "Tor exit node",
+            "confidence": "medium",
+        },
+        {
+            "ip_address": "91.219.236.15",
+            "threat_type": "Credential stuffing source",
+            "confidence": "high",
+        },
+        {
+            "ip_address": "193.32.160.12",
+            "threat_type": "Suspicious scanner",
+            "confidence": "medium",
+        },
+    ]
+
+def main():
+    cloudtrail_events = generate_cloudtrail_events()
+    guardduty_findings = generate_guardduty_findings(cloudtrail_events)
+    iam_users = generate_iam_users()
+    threat_intel = generate_threat_intel()
+
+    with open(RAW_DIR / "cloudtrail_events.json", "w") as f:
+        json.dump(cloudtrail_events, f, indent=2)
+
+    with open(RAW_DIR / "guardduty_findings.json", "w") as f:
+        json.dump(guardduty_findings, f, indent=2)
+
+    iam_users.to_csv(RAW_DIR / "iam_users.csv", index=False)
+    threat_intel.to_csv(RAW_DIR / "threat_intel.csv", index=False)
+
+    print("Synthetic security data generated:")
+    print(f"- {RAW_DIR / 'cloudtrail_events.json'}")
+    print(f"- {RAW_DIR / 'guardduty_findings.json'}")
+    print(f"- {RAW_DIR / 'iam_users.csv'}")
+    print(f"- {RAW_DIR / 'threat_intel.csv'}")
+
+if __name__ == "__main__":
+    main()
