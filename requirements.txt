@@ -1,0 +1,8 @@
+pandas
+pyarrow
+faker
+pyspark
+delta-spark
+jupyter
+ipykernel
+pytest
