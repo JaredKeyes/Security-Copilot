@@ -28,9 +28,9 @@ def main():
         cloudtrail
         .withColumn("event_timestamp", to_timestamp(col("event_time")))
         .withColumn(
-            "severity_label",
-            when(col("is_sensitive_event") == True, "high")
-            .when(col("error_code").isNotNull(), "medium")
+            "risk_level",
+            when(col("event_name").isin("DeleteTrail", "StopLogging", "CreateAccessKey"), "high")
+            .when(col("event_name").isin("AssumeRole", "AuthorizeSecurityGroupIngress"), "medium")
             .otherwise("low")
         )
         .withColumn(

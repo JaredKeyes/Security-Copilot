@@ -18,16 +18,8 @@ def main():
 
     BRONZE_DIR.mkdir(parents=True, exist_ok=True)
 
-    cloudtrail = (
-        spark.read
-        .option("multiLine", "true")
-        .json(str(RAW_DIR / "cloudtrail_events.json"))
-    )
-    guardduty = (
-        spark.read
-        .option("multiLine", "true")
-        .json(str(RAW_DIR / "guardduty_findings.json"))
-    )
+    cloudtrail = spark.read.option("multiLine", "true").json(str(RAW_DIR / "cloudtrail_events.json"))
+    guardduty = spark.read.option("multiLine", "true").json(str(RAW_DIR / "guardduty_findings.json"))
     iam_users = spark.read.option("header", True).option("inferSchema", True).csv(str(RAW_DIR / "iam_users.csv"))
     threat_intel = spark.read.option("header", True).option("inferSchema", True).csv(str(RAW_DIR / "threat_intel.csv"))
 

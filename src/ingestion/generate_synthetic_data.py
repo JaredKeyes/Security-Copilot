@@ -112,6 +112,7 @@ def generate_cloudtrail_events(num_events: int = 500):
         }
 
         events.append(event)
+        
     return events
 
 def generate_guardduty_findings(cloudtrail_events, num_findings: int = 40):
