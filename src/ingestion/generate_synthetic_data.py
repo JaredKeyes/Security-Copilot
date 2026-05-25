@@ -119,15 +119,68 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
     """
     Generate  deterministic attack chains so the AI/agent has clear patterns to investigate.
 
-    These events are intentionally non-random and represent realistic security investigation scenarios.
+    Returns:
+        attack_events: CloudTrail-style events visible to the AI.
+        evaluation_labels: Hidden labels used later for evaluation only.
     """
     now = datetime.now(timezone.utc)
 
-    scenarios = []
+    attack_events = []
+    evaluation_labels = []
 
-    # Scenario 1: Suspected credential compromise
+    def add_attack_event(
+        event_name,
+        event_time,
+        source_ip,
+        user_name,
+        user_type,
+        region,
+        region_name,
+        scenario_name,
+        attack_stage,
+        expected_reasoning,
+        error_code=None,
+    ):
+      event_id = f"evt-{start_index + len(attack_events):05d}"
+
+      attack_events.append(
+        {
+            "event_id": event_id,
+            "event_time": event_time.isoformat(),
+            "event_source": "aws.amazonaws.com",
+            "event_name": event_name,
+            "aws_region": region,
+            "source_ip_address": source_ip,
+            "user_name": user_name,
+            "user_type": user_type,
+            "account_id": "123456789012"
+            "resource_name": resource_name,
+            "error_code": error_code,
+            "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
+            "is_sensitive_event": event_name in SENSITIVE_EVENTS,
+        }
+      )
+
+      evaluation_labels.append(
+        {
+            "event_id": event_id,
+            "scenario_name": scenario_name,
+            "attack_stage": attack_stage,
+            "expected_detection": True,
+            "expected_reasoning": expected_reasoning,
+        }
+      )
+
+    # Scenario 1: Credential compromise
+    # Pattern:
+    # New/suspicious IP -> ConsoleLogin -> ListBuckets -> GetObject -> CreateAccessKey -> AssumeRole
     compromised_user = "jsmith"
     attacker_ip = "45.155.205.233"
+
+    add_attack_event(
+        event_name="ConsoleLogin",
+        event_time=now - timedelta(hours=2, minutes=30)
+    )
 
     credential_compromise_steps = [
         ("ConsoleLogin", "Successful login from known malicious IP"),
