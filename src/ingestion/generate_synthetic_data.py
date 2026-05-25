@@ -115,6 +115,112 @@ def generate_cloudtrail_events(num_events: int = 500):
         
     return events
 
+def generate_seeded_attack_scenarios(start_index: int = 10000):
+    """
+    Generate  deterministic attack chains so the AI/agent has clear patterns to investigate.
+
+    These events are intentionally non-random and represent realistic security investigation scenarios.
+    """
+    now = datetime.now(timezone.utc)
+
+    scenarios = []
+
+    # Scenario 1: Suspected credential compromise
+    compromised_user = "jsmith"
+    attacker_ip = "45.155.205.233"
+
+    credential_compromise_steps = [
+        ("ConsoleLogin", "Successful login from known malicious IP"),
+        ("ListBuckets", "Reconnaissance of available S3 buckets"),
+        ("GetObject", "Access to sensitive customer data"),
+        ("CreateAccessKey", "Persistence attempt through new access key"),
+        ("AssumeRole", "Privilege escalation attempt into admin role"),
+    ]
+
+    for offset, (event_name, description) in enumerate(credential_compromise_steps):
+        scenarios.append(
+            {
+                "event_id": f"evt-{start_index + len(scenarios):05d}",
+                "event_time": (now - timedelta(hours=2, minutes=30 - offset * 5)).isoformat(),
+                "event_source": "aws.amazonaws.com",
+                "event_name": event_name,
+                "aws_region": "us-east-1",
+                "source_ip_address": attacker_ip,
+                "user_name": compromised_user,
+                "user_type": "IAMUser",
+                "account_id": "123456789012"
+                "resource_name": "customer-data-bucket" if event_name in ["ListBuckets", "GetObject"] else "admin-role",
+                "error_code": None,
+                "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
+                "is_sensitive_event": event_name in SENSITIVE_EVENTS,
+                "scenario_description": description,
+            }
+        )
+
+    # Scenario 2: CloudTrail tampering
+    tampering_user = "admin.user"
+    tampering_ip = "91.219.236.15"
+
+    cloudtrail_tampering_steps = [
+        ("AssumeRole", "Admin role assumed from suspicious IP"),
+        ("StopLogging", "CloudTrail logging stopped"),
+        ("DeleteTrail", "CloudTrail trail deletion attempted"),
+    ]
+
+    for offset, (event_name, description) in enumerate(cloudtrail_tampering_steps):
+        scenarios.append(
+            {
+                "event_id": f"evt-{start_index + len(scenarios):05d}",
+                "event_time": (now - timedelta(hours=1, minutes=20 - offset *5)).isoformat(),
+                "event_source": "aws.amazonaws.com",
+                "event_name": event_name,
+                "aws_region": "us-east-1",
+                "source_ip_address": tampering_ip,
+                "user_name": tampering_user,
+                "user_type": "IAMUser",
+                "account_id": "123456789012",
+                "resource_name": "cloudtrail-main",
+                "error_code": None,
+                "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
+                "is_sensitive_event": event_name in SENSITIVE_EVENTS,
+                "scenario_name": "cloudtrail_tampering",
+                "scenario_description": description,
+            }
+        )
+
+    # Scenario 3: Suspicious infrastrucutre modification
+    infra_user = "svc-ci-cd"
+    infra_ip = "193.32.160.12"
+
+    infrastrucutre_abuse_steps = [
+        ("AssumeRole", "Service account assumed deployment role"),
+        ("AuthorizeSecurityGroupIngress", "Security group opened to external traffic"),
+        ("RunInstances", "New EC2 instance launched after network exposure"),
+    ]
+
+    for offset, (event_name, description) in enumerate(infrastructure_abuse_steps):
+        scenarios.append(
+            {
+                "event_id": f"evt-(start_index + len(scenarios):05d)",
+                "event_time": (now -timedelta(minutes=45 - offset * 5)).isoformat(),
+                "event_source": "aws.amazonaws.com",
+                "event_name": event_name,
+                "aws_region": "us-west-2"
+                "source_ip_address": infra_ip,
+                "user_name": infra_user,
+                "user_type": "ServiceAccount",
+                "account_id": "123456789012",
+                "resource_name": "security-group-prod" if event_name == "AuthorizeSecurityGroupIngress" else "web-prod-instance",
+                "error_code": None,
+                "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
+                "is_sensitive_event": event_name in SENSITIVE_EVENTS,
+                "scenario_name": "suspicious_infrastructure_change",
+                "scenario_description": description, 
+            }
+        )
+
+    return scenarios
+
 def generate_guardduty_findings(cloudtrail_events, num_findings: int = 40):
     suspicious_events = [
         event
@@ -191,6 +297,8 @@ def generate_threat_intel():
 
 def main():
     cloudtrail_events = generate_cloudtrail_events()
+    seeded_attack_events = generate_seeded_attack_scenarios()
+    cloudtrail_events.extend(seeded_attack_events)
     guardduty_findings = generate_guardduty_findings(cloudtrail_events)
     iam_users = generate_iam_users()
     threat_intel = generate_threat_intel()
