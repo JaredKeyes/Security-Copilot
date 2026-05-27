@@ -179,69 +179,117 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
 
     add_attack_event(
         event_name="ConsoleLogin",
-        event_time=now - timedelta(hours=2, minutes=30)
+        event_time=now - timedelta(hours=2, minutes=30),
+        source_ip=attacker_ip,
+        user_name=compromised_user,
+        user_type="IAMUser",
+        region="us-east-1",
+        resource_name="aws-console",
+        scenario_name="credential_compromise",
+        attack_stage="initial_access",
+        expected_reasoning="Successful console login from a known malicious IP."
     )
 
-    credential_compromise_steps = [
-        ("ConsoleLogin", "Successful login from known malicious IP"),
-        ("ListBuckets", "Reconnaissance of available S3 buckets"),
-        ("GetObject", "Access to sensitive customer data"),
-        ("CreateAccessKey", "Persistence attempt through new access key"),
-        ("AssumeRole", "Privilege escalation attempt into admin role"),
-    ]
+    add_attack_event(
+        event_name="ListBuckets",
+        event_time=now - timedelta(hours=2, mintues=30),
+        source_ip=attacker_ip,
+        user_name=compromised_user,
+        user_type="IAMUser",
+        region="us-east-1",
+        resource_name="s3",
+        scenario_name="credential_compromise",
+        attack_stage="discovery",
+        expected_reasoning="s3 bucket discovery shortly after suspicious login.",
+    )
 
-    for offset, (event_name, description) in enumerate(credential_compromise_steps):
-        scenarios.append(
-            {
-                "event_id": f"evt-{start_index + len(scenarios):05d}",
-                "event_time": (now - timedelta(hours=2, minutes=30 - offset * 5)).isoformat(),
-                "event_source": "aws.amazonaws.com",
-                "event_name": event_name,
-                "aws_region": "us-east-1",
-                "source_ip_address": attacker_ip,
-                "user_name": compromised_user,
-                "user_type": "IAMUser",
-                "account_id": "123456789012"
-                "resource_name": "customer-data-bucket" if event_name in ["ListBuckets", "GetObject"] else "admin-role",
-                "error_code": None,
-                "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
-                "is_sensitive_event": event_name in SENSITIVE_EVENTS,
-                "scenario_description": description,
-            }
-        )
+    add_attack_event(
+        event_name="GetObject",
+        event_time=now - timedelta(hours=2, minutes=15),
+        source_ip=attacker_ip,
+        user_name=compromised_user,
+        user_type="IAMUser",
+        region="us-east-1",
+        resource_name="customer-data-bucket",
+        scenario_name="credential_compromise",
+        attack_stage="collection",
+        expected_reasoning="Access to sensitive customer data after bucket discovery.",
+    )
+
+    add_attack_event(
+        event_name="CreateAccessKey",
+        event_time=now - timedelta(hours=2, minutes=15),
+        source_ip=attacker_ip,
+        user_name=compromised_user,
+        user_type="IAMUser"
+        region="us-east-1",
+        resource_name=compromised_user,
+        scenario_name="credential_compromise",
+        attack_stage="persistence",
+        expected_reasoning="Access key creation after suspicious activity may indicate persistence.",
+    )
+
+    add_attack_event(
+        event_name="AssumeRole",
+        event_time=now - timedelta(hours=2, minutes=10),
+        source_ip=attacker_ip,
+        user_name=compromised_user,
+        user_type="IAMUser",
+        region="us-east-1",
+        resource_name="admin-role",
+        scenario_name="credential_compromise",
+        attack_stage="privilege_escalation",
+        expected_reasoning="Attempt to assume an admin role after suspicious login and persistence behavior."
+    )
 
     # Scenario 2: CloudTrail tampering
+    # Pattern
+    # Suspicious IP -> AssumeRole -> StopLogging -> DeleteTrail
     tampering_user = "admin.user"
     tampering_ip = "91.219.236.15"
 
-    cloudtrail_tampering_steps = [
-        ("AssumeRole", "Admin role assumed from suspicious IP"),
-        ("StopLogging", "CloudTrail logging stopped"),
-        ("DeleteTrail", "CloudTrail trail deletion attempted"),
-    ]
+    add_attack_event(
+        event_name="AssumeRole",
+        event_time=now - timedelta(hours=1, minutes=20),
+        source_ip=tampering_ip,
+        user_name=tampering_user,
+        user_type="IAMUser",
+        region="us-east-1",
+        resource_name="admin-role",
+        scenario_name="cloudtrail_tampering",
+        attack_stage="privilege_escalation"
+        expected_reasoning="Admin role assumed from a suspicious IP."
+    )
 
-    for offset, (event_name, description) in enumerate(cloudtrail_tampering_steps):
-        scenarios.append(
-            {
-                "event_id": f"evt-{start_index + len(scenarios):05d}",
-                "event_time": (now - timedelta(hours=1, minutes=20 - offset *5)).isoformat(),
-                "event_source": "aws.amazonaws.com",
-                "event_name": event_name,
-                "aws_region": "us-east-1",
-                "source_ip_address": tampering_ip,
-                "user_name": tampering_user,
-                "user_type": "IAMUser",
-                "account_id": "123456789012",
-                "resource_name": "cloudtrail-main",
-                "error_code": None,
-                "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
-                "is_sensitive_event": event_name in SENSITIVE_EVENTS,
-                "scenario_name": "cloudtrail_tampering",
-                "scenario_description": description,
-            }
-        )
+    add_attack_event(
+        event_name="StopLogging",
+        event_time=now - timedelta(hours=1, minutes=15),
+        source_ip=tampering_ip,
+        user_name=tampering_user,
+        user_type="IAMUser",
+        region="us-east-1",
+        resource_name="cloudtrail-main",
+        scenario_name="cloudtrail_tampering",
+        attack_stage="defense_evasion",
+        expected_reasoning="CloudTrail logging stopped after suspicious admin role activity.",
+    )
 
-    # Scenario 3: Suspicious infrastrucutre modification
+    add_attack_event(
+        event_name="DeleteTrail",
+        event_time=now - timedelta(hours=1, minutes=10),
+        source_ip=tampering_ip,
+        user_name=tampering_user,
+        user_type="IAMUser",
+        region="us-east-1",
+        resource_name="cloudtrail-main",
+        scenario_name="cloudtrail_tampering",
+        attack_stage="defense_evasion",
+        expected_reasoning="CloudTrail trail deletion attempted after logging was stopped.",
+    )
+
+    # Scenario 3: Suspicious infrastructure modification
+    # Pattern:
+    # Service account -> AssumeRole -> Open security group -> Launch instance
     infra_user = "svc-ci-cd"
     infra_ip = "193.32.160.12"
 
