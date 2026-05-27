@@ -293,6 +293,22 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
     infra_user = "svc-ci-cd"
     infra_ip = "193.32.160.12"
 
+    add_attack_event(
+        event_name="AssumeRole",
+        event_time=now - timedelta(minutes=45),
+        source_ip=infra_ip,
+        user_name=infra_user,
+        user_type="ServiceAccount",
+        region="us-west-2",
+        resource_name="deployment-role",
+        scenario_name="suspicious_infrastructure_change",
+        attack_stage="privilege_escalation",
+        expected_reasoning="Service account assumed a deployment role from a susicious IP.",
+    )
+
+    add_attack_event(
+        event_name="Author"
+    )
     infrastrucutre_abuse_steps = [
         ("AssumeRole", "Service account assumed deployment role"),
         ("AuthorizeSecurityGroupIngress", "Security group opened to external traffic"),
