@@ -135,7 +135,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_name,
         user_type,
         region,
-        region_name,
+        resource_name,
         scenario_name,
         attack_stage,
         expected_reasoning,
@@ -153,7 +153,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
             "source_ip_address": source_ip,
             "user_name": user_name,
             "user_type": user_type,
-            "account_id": "123456789012"
+            "account_id": "123456789012",
             "resource_name": resource_name,
             "error_code": error_code,
             "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
@@ -187,12 +187,12 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         resource_name="aws-console",
         scenario_name="credential_compromise",
         attack_stage="initial_access",
-        expected_reasoning="Successful console login from a known malicious IP."
+        expected_reasoning="Successful console login from a known malicious IP.",
     )
 
     add_attack_event(
         event_name="ListBuckets",
-        event_time=now - timedelta(hours=2, mintues=30),
+        event_time=now - timedelta(hours=2, minutes=30),
         source_ip=attacker_ip,
         user_name=compromised_user,
         user_type="IAMUser",
@@ -221,7 +221,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         event_time=now - timedelta(hours=2, minutes=15),
         source_ip=attacker_ip,
         user_name=compromised_user,
-        user_type="IAMUser"
+        user_type="IAMUser",
         region="us-east-1",
         resource_name=compromised_user,
         scenario_name="credential_compromise",
@@ -239,7 +239,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         resource_name="admin-role",
         scenario_name="credential_compromise",
         attack_stage="privilege_escalation",
-        expected_reasoning="Attempt to assume an admin role after suspicious login and persistence behavior."
+        expected_reasoning="Attempt to assume an admin role after suspicious login and persistence behavior.",
     )
 
     # Scenario 2: CloudTrail tampering
@@ -257,8 +257,8 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         region="us-east-1",
         resource_name="admin-role",
         scenario_name="cloudtrail_tampering",
-        attack_stage="privilege_escalation"
-        expected_reasoning="Admin role assumed from a suspicious IP."
+        attack_stage="privilege_escalation",
+        expected_reasoning="Admin role assumed from a suspicious IP.",
     )
 
     add_attack_event(
@@ -307,36 +307,32 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
     )
 
     add_attack_event(
-        event_name="Author"
+        event_name="AuthorizeSecurityGroupIngress",
+        event_time=now - timedelta(minutes=40),
+        source_ip=infra_ip,
+        user_name=infra_user,
+        user_type="ServiceAccount",
+        region="us-west-2",
+        resource_name="security-group-prod",
+        scenario_name="suspicious_infrastructure_change",
+        attack_stage="network_exposure",
+        expected_reasoning="Security group ingress was modified after suspicious service account activity.",
     )
-    infrastrucutre_abuse_steps = [
-        ("AssumeRole", "Service account assumed deployment role"),
-        ("AuthorizeSecurityGroupIngress", "Security group opened to external traffic"),
-        ("RunInstances", "New EC2 instance launched after network exposure"),
-    ]
 
-    for offset, (event_name, description) in enumerate(infrastructure_abuse_steps):
-        scenarios.append(
-            {
-                "event_id": f"evt-(start_index + len(scenarios):05d)",
-                "event_time": (now -timedelta(minutes=45 - offset * 5)).isoformat(),
-                "event_source": "aws.amazonaws.com",
-                "event_name": event_name,
-                "aws_region": "us-west-2"
-                "source_ip_address": infra_ip,
-                "user_name": infra_user,
-                "user_type": "ServiceAccount",
-                "account_id": "123456789012",
-                "resource_name": "security-group-prod" if event_name == "AuthorizeSecurityGroupIngress" else "web-prod-instance",
-                "error_code": None,
-                "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
-                "is_sensitive_event": event_name in SENSITIVE_EVENTS,
-                "scenario_name": "suspicious_infrastructure_change",
-                "scenario_description": description, 
-            }
-        )
+    add_attack_event(
+        event_name="RunInstances",
+        event_time=now - timedelta(minutes=35),
+        source_ip=infra_ip,
+        user_name=infra_user,
+        user_type="ServiceAccount",
+        region="us-west-2",
+        resource_name="web-prod-instance",
+        scenario_name="suspicious_infrastructure_change",
+        attack_stage="execution",
+        expected_reasoning="New compute instance launched after network exposure.",
+    )
 
-    return scenarios
+    return attack_events, evaluation_labels
 
 def generate_guardduty_findings(cloudtrail_events, num_findings: int = 40):
     suspicious_events = [
@@ -414,8 +410,10 @@ def generate_threat_intel():
 
 def main():
     cloudtrail_events = generate_cloudtrail_events()
-    seeded_attack_events = generate_seeded_attack_scenarios()
-    cloudtrail_events.extend(seeded_attack_events)
+    attack_events, evaluation_labels = generate_seeded_attack_scenarios()
+
+    cloudtrail_events.extend(attack_events)
+
     guardduty_findings = generate_guardduty_findings(cloudtrail_events)
     iam_users = generate_iam_users()
     threat_intel = generate_threat_intel()
@@ -426,6 +424,9 @@ def main():
     with open(RAW_DIR / "guardduty_findings.json", "w") as f:
         json.dump(guardduty_findings, f, indent=2)
 
+    with open(RAW_DIR / "evaluation_labels.json", "w") as f:
+        json.dump(evaluation_labels, f, indent=2)
+
     iam_users.to_csv(RAW_DIR / "iam_users.csv", index=False)
     threat_intel.to_csv(RAW_DIR / "threat_intel.csv", index=False)
 
@@ -434,6 +435,7 @@ def main():
     print(f"- {RAW_DIR / 'guardduty_findings.json'}")
     print(f"- {RAW_DIR / 'iam_users.csv'}")
     print(f"- {RAW_DIR / 'threat_intel.csv'}")
+    print(f"- {RAW_DIR / 'evaluation_labels.json'}")
 
 if __name__ == "__main__":
     main()

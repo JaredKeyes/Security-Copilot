@@ -1,0 +1,79 @@
+[
+  {
+    "event_id": "evt-10000",
+    "scenario_name": "credential_compromise",
+    "attack_stage": "initial_access",
+    "expected_detection": true,
+    "expected_reasoning": "Successful console login from a known malicious IP."
+  },
+  {
+    "event_id": "evt-10001",
+    "scenario_name": "credential_compromise",
+    "attack_stage": "discovery",
+    "expected_detection": true,
+    "expected_reasoning": "s3 bucket discovery shortly after suspicious login."
+  },
+  {
+    "event_id": "evt-10002",
+    "scenario_name": "credential_compromise",
+    "attack_stage": "collection",
+    "expected_detection": true,
+    "expected_reasoning": "Access to sensitive customer data after bucket discovery."
+  },
+  {
+    "event_id": "evt-10003",
+    "scenario_name": "credential_compromise",
+    "attack_stage": "persistence",
+    "expected_detection": true,
+    "expected_reasoning": "Access key creation after suspicious activity may indicate persistence."
+  },
+  {
+    "event_id": "evt-10004",
+    "scenario_name": "credential_compromise",
+    "attack_stage": "privilege_escalation",
+    "expected_detection": true,
+    "expected_reasoning": "Attempt to assume an admin role after suspicious login and persistence behavior."
+  },
+  {
+    "event_id": "evt-10005",
+    "scenario_name": "cloudtrail_tampering",
+    "attack_stage": "privilege_escalation",
+    "expected_detection": true,
+    "expected_reasoning": "Admin role assumed from a suspicious IP."
+  },
+  {
+    "event_id": "evt-10006",
+    "scenario_name": "cloudtrail_tampering",
+    "attack_stage": "defense_evasion",
+    "expected_detection": true,
+    "expected_reasoning": "CloudTrail logging stopped after suspicious admin role activity."
+  },
+  {
+    "event_id": "evt-10007",
+    "scenario_name": "cloudtrail_tampering",
+    "attack_stage": "defense_evasion",
+    "expected_detection": true,
+    "expected_reasoning": "CloudTrail trail deletion attempted after logging was stopped."
+  },
+  {
+    "event_id": "evt-10008",
+    "scenario_name": "suspicious_infrastructure_change",
+    "attack_stage": "privilege_escalation",
+    "expected_detection": true,
+    "expected_reasoning": "Service account assumed a deployment role from a susicious IP."
+  },
+  {
+    "event_id": "evt-10009",
+    "scenario_name": "suspicious_infrastructure_change",
+    "attack_stage": "network_exposure",
+    "expected_detection": true,
+    "expected_reasoning": "Security group ingress was modified after suspicious service account activity."
+  },
+  {
+    "event_id": "evt-10010",
+    "scenario_name": "suspicious_infrastructure_change",
+    "attack_stage": "execution",
+    "expected_detection": true,
+    "expected_reasoning": "New compute instance launched after network exposure."
+  }
+]
