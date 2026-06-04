@@ -360,9 +360,19 @@ def generate_benign_baseline_events(start_index: int = 9000):
                 {
                     "event_id": event_id,
                     "event_time": (now - timedelta(days=3, hours=i)).isoformat(),
-                    "event_source"
+                    "event_source": EVENT_SOURCE_MAP.get(event_name, "unknown.amazonaws.com"),
+                    "event_name": event_name,
+                    "aws_region": "us-east-1",
+                    "source_ip_address": normal_ip,
+                    "user_name": user_name,
+                    "user_type": "ServiceAccount" if user_name.startswith("svc-") else "IAMUser",
+                    "account_id": "123456789012"
+                    "resource_name": "prod-app-bucket" if event_name in ["ListBuckets", "PutObject"] else "admin-role",
+                    "error_code": None,
                 }
             )
+
+    return baseline_events
 
 def generate_guardduty_findings(cloudtrail_events, num_findings: int = 40):
     suspicious_events = [
@@ -495,8 +505,10 @@ def generate_threat_intel():
 
 def main():
     cloudtrail_events = generate_cloudtrail_events()
+    baseline_events = generate_benign_baseline_events()
     attack_events, evaluation_labels = generate_seeded_attack_scenarios()
 
+    cloudtrail_events.extend(baseline_events)
     cloudtrail_events.extend(attack_events)
 
     random_guardduty_findings = generate_guardduty_findings(cloudtrail_events)

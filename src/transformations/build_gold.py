@@ -41,6 +41,9 @@ def main():
             guardduty.source_ip_address,
             guardduty.resource_name,
             guardduty.finding_timestamp,
+            cloudtrail.account_id,
+            cloudtrail.aws_region,
+            cloudtrail.event_source,
             cloudtrail.event_name,
             cloudtrail.event_outcome,
             cloudtrail.mitre_technique,
@@ -86,23 +89,53 @@ def main():
         .select(
             "event_id",
             "event_timestamp",
+            "account_id",
+            "aws_region",
+            "event_source",
             "user_name",
+            "user_type",
             "source_ip_address",
             "event_name",
             "resource_name",
             "risk_level",
             "event_outcome",
             "mitre_technique",
+            "is_sensitive_event",
             "is_known_bad_ip",
             "threat_type",
         )
         .orderBy("event_timestamp")
     )
 
+    investigation_context = (
+        cloudtrail
+        .select(
+            "event_id",
+            "event_timestamp",
+            "account_id",
+            "aws_region",
+            "event_source",
+            "event_name",
+            "user_name",
+            "user_type",
+            "source_ip_address",
+            "resource_name",
+            "risk_level",
+            "event_outcome",
+            "mitre_technique",
+            "is_sensitive_event",
+            "is_known_bad_ip",
+            "threat_type",
+            "confidence",
+        )
+        .orderBy("user_name", "event_timestamp")
+    )
+
     security_findings_enriched.write.mode("overwrite").parquet(str(GOLD_DIR / "security_findings_enriched"))
     user_risk_summary.write.mode("overwrite").parquet(str(GOLD_DIR / "user_risk_summary"))
     ip_reputation_summary.write.mode("overwrite").parquet(str(GOLD_DIR / "ip_reputation_summary"))
     alert_timeline.write.mode("overwrite").parquet(str(GOLD_DIR / "alert_timeline"))
+    investigation_context.write.mode("overwrite").parquet(str(GOLD_DIR / "investigation_context"))
 
     print("Gold layer created successfully.")
 

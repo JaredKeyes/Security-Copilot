@@ -1,8 +1,9 @@
+from itertools import chain
 from pathlib import Path
 
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, create_map, lit, to_timestamp, when
-from itertools import chain
+
 
 BRONZE_DIR = Path("data/bronze")
 SILVER_DIR = Path("data/silver")
@@ -51,7 +52,11 @@ def main():
     cloudtrail_clean = (
         cloudtrail
         .withColumn("event_timestamp", to_timestamp(col("event_time")))
-        .withColumn("mitre_technique", mitre_expr.getItem(col("event_name")))
+        .withColumn(
+            "mitre_technique", 
+            when(mitre_expr.getItem(col("event_name")).isNotNull(), mitre_expr.getItem(col("event_name")))
+            .otherwise("Unknown")
+        )
         .withColumn("is_sensitive_event", col("event_name").isin(SENSITIVE_EVENTS))
         .withColumn(
             "risk_level",
