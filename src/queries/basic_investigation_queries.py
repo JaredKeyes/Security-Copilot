@@ -33,6 +33,11 @@ def main():
     print("\n=== High-Risk Timeline Events ===")
     timeline.filter(col("risk_level") == "high").show(20, truncate=False)
 
+    print("\n=== Investigation Timeline: jsmith ===")
+    timeline.filter(col("user_name") == "jsmith").orderBy("event_timestamp").show(50, truncate=False)
+
+    
+
     spark.stop()
 
 if __name__ == "__main__":
