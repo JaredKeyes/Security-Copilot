@@ -35,14 +35,6 @@ EVENT_NAMES = [
     "StopLogging",
 ]
 
-SENSITIVE_EVENTS = {
-    "CreateAccessKey",
-    "DeleteTrail",
-    "AuthorizeSecurityGroupIngress",
-    "StopLogging",
-    "AssumeRole",
-}
-
 GUARDDUTY_TYPES = [
     "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration",
     "Recon:IAMUser/UserPermissions",
@@ -51,20 +43,21 @@ GUARDDUTY_TYPES = [
     "Impact:EC2/MaliciousIPCaller",
 ]
 
-MITRE_MAP = {
-    "ConsoleLogin": "T1078 - Valid Accounts",
-    "AssumeRole": "T1078 - Valid Accounts",
-    "ListBuckets": "T1619 - Cloud Storage Object Discovery",
-    "GetObject": "T1530 - Data from Cloud Storage",
-    "PutObject": "T1105 - Ingress Tool Transfer",
-    "CreateAccessKey": "T1098 - Account Manipulation",
-    "DeleteTrail": "T1562.008 - Disable Cloud Logs",
-    "AuthorizeSecurityGroupIngress": "T1578 - Modify Cloud Compute Infrastructure",
-    "StopLogging": "T1562.008 - Disable Cloud Logs",
+EVENT_SOURCE_MAP = {
+    "ConsoleLogin": "signin.amazonaws.com",
+    "AssumeRole": "sts.amazonaws.com",
+    "ListBuckets": "s3.amazonaws.com",
+    "GetObject": "s3.amazonaws.com",
+    "PutObject": "s3.amazonaws.com",
+    "CreateAccessKey": "iam.amazonaws.com",
+    "DeleteTrail": "cloudtrail.amazonaws.com",
+    "StopLogging": "cloudtrail.amazonaws.com",
+    "AuthorizeSecurityGroupIngress": "ec2.amazonaws.com",
+    "RunInstances": "ec2.amazonaws.com",
 }
 
 def random_ip():
-    if random.random() < 0.15:
+    if random.random() < 0.02:
         return random.choice(
             [
                 "45.155.205.233",
@@ -89,7 +82,7 @@ def generate_cloudtrail_events(num_events: int = 500):
         event = {
             "event_id": f"evt-{i + 1:05d}",
             "event_time": event_time.isoformat(),
-            "event_source": "aws.amazonaws.com",
+            "event_source": EVENT_SOURCE_MAP.get(event_name, "unknown.amazonaws.com"),
             "event_name": event_name,
             "aws_region": random.choice(["us-east-1", "us-east-2", "us-west-2"]),
             "source_ip_address": source_ip,
@@ -107,8 +100,6 @@ def generate_cloudtrail_events(num_events: int = 500):
                 ]
             ),
             "error_code": random.choice([None, None, None, "AccessDenied"]),
-            "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
-            "is_sensitive_event": event_name in SENSITIVE_EVENTS,
         }
 
         events.append(event)
@@ -136,6 +127,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type,
         region,
         resource_name,
+        scenario_id,
         scenario_name,
         attack_stage,
         expected_reasoning,
@@ -147,7 +139,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         {
             "event_id": event_id,
             "event_time": event_time.isoformat(),
-            "event_source": "aws.amazonaws.com",
+            "event_source": EVENT_SOURCE_MAP.get(event_name, "unknown.amazonaws.com"),
             "event_name": event_name,
             "aws_region": region,
             "source_ip_address": source_ip,
@@ -156,14 +148,13 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
             "account_id": "123456789012",
             "resource_name": resource_name,
             "error_code": error_code,
-            "mitre_technique": MITRE_MAP.get(event_name, "Unknown"),
-            "is_sensitive_event": event_name in SENSITIVE_EVENTS,
         }
       )
 
       evaluation_labels.append(
         {
             "event_id": event_id,
+            "scenario_id": scenario_id,
             "scenario_name": scenario_name,
             "attack_stage": attack_stage,
             "expected_detection": True,
@@ -185,6 +176,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name="aws-console",
+        scenario_id="scn-001",
         scenario_name="credential_compromise",
         attack_stage="initial_access",
         expected_reasoning="Successful console login from a known malicious IP.",
@@ -198,6 +190,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name="s3",
+        scenario_id="scn-001",
         scenario_name="credential_compromise",
         attack_stage="discovery",
         expected_reasoning="s3 bucket discovery shortly after suspicious login.",
@@ -211,6 +204,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name="customer-data-bucket",
+        scenario_id="scn-001",
         scenario_name="credential_compromise",
         attack_stage="collection",
         expected_reasoning="Access to sensitive customer data after bucket discovery.",
@@ -224,6 +218,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name=compromised_user,
+        scenario_id="scn-001",
         scenario_name="credential_compromise",
         attack_stage="persistence",
         expected_reasoning="Access key creation after suspicious activity may indicate persistence.",
@@ -237,6 +232,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name="admin-role",
+        scenario_id="scn-001",
         scenario_name="credential_compromise",
         attack_stage="privilege_escalation",
         expected_reasoning="Attempt to assume an admin role after suspicious login and persistence behavior.",
@@ -256,6 +252,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name="admin-role",
+        scenario_id="scn-002",
         scenario_name="cloudtrail_tampering",
         attack_stage="privilege_escalation",
         expected_reasoning="Admin role assumed from a suspicious IP.",
@@ -269,6 +266,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name="cloudtrail-main",
+        scenario_id="scn-002",
         scenario_name="cloudtrail_tampering",
         attack_stage="defense_evasion",
         expected_reasoning="CloudTrail logging stopped after suspicious admin role activity.",
@@ -282,6 +280,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="IAMUser",
         region="us-east-1",
         resource_name="cloudtrail-main",
+        scenario_id="scn-002",
         scenario_name="cloudtrail_tampering",
         attack_stage="defense_evasion",
         expected_reasoning="CloudTrail trail deletion attempted after logging was stopped.",
@@ -301,6 +300,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="ServiceAccount",
         region="us-west-2",
         resource_name="deployment-role",
+        scenario_id="scn-003",
         scenario_name="suspicious_infrastructure_change",
         attack_stage="privilege_escalation",
         expected_reasoning="Service account assumed a deployment role from a susicious IP.",
@@ -314,6 +314,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="ServiceAccount",
         region="us-west-2",
         resource_name="security-group-prod",
+        scenario_id="scn-003",
         scenario_name="suspicious_infrastructure_change",
         attack_stage="network_exposure",
         expected_reasoning="Security group ingress was modified after suspicious service account activity.",
@@ -327,6 +328,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="ServiceAccount",
         region="us-west-2",
         resource_name="web-prod-instance",
+        scenario_id="scn-003"
         scenario_name="suspicious_infrastructure_change",
         attack_stage="execution",
         expected_reasoning="New compute instance launched after network exposure.",
@@ -365,6 +367,23 @@ def generate_guardduty_findings(cloudtrail_events, num_findings: int = 40):
 
     return findings
 
+def generate_seeded_guardduty_findings(attack_events):
+    findings = []
+
+    key_events = [
+        event for event in attack_events
+        if event["event_name"] in [
+            "CreateAccessKey",
+            "DeleteTrail",
+            "AuthorizeSecurityGroupIngress",
+        ]
+    ]
+
+    finding_map = {
+        "CreateAccessKey": {
+            "finding_type": "UnauthorizedAccess:IAMUser/"
+        }
+    }
 def generate_iam_users():
     rows = []
 

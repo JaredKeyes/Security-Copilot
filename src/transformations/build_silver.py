@@ -1,10 +1,32 @@
 from pathlib import Path
 
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import col, to_timestamp, when
+from pyspark.sql.functions import col, create_map, lit, to_timestamp, when
+from itertools import chain
 
 BRONZE_DIR = Path("data/bronze")
 SILVER_DIR = Path("data/silver")
+
+MITRE_MAP = {
+    "ConsoleLogin": "T1078 - Valid Accounts",
+    "AssumeRole": "T1078 - Valid Accounts",
+    "ListBuckets": "T1619 - Cloud Storage Object Discovery",
+    "GetObject": "T1530 - Data from Cloud Storage",
+    "PutObject": "T1105 - Ingress Tool Transfer",
+    "CreateAccessKey": "T1098 - Account Manipulation",
+    "DeleteTrail": "T1562.008 - Disable Cloud Logs",
+    "AuthorizeSecurityGroupIngress": "T1578 - Modify Cloud Compute Infrastructure",
+    "RunInstances": "T1578 - Modify Cloud Compute Infrastructure",
+    "StopLogging": "T1562.008 - Disable Cloud Logs",
+}
+
+SENSITIVE_EVENTS = {
+    "CreateAccessKey",
+    "DeleteTrail",
+    "AuthorizeSecurityGroupIngress",
+    "StopLogging",
+    "AssumeRole",
+}
 
 def get_spark():
     return (
@@ -24,9 +46,13 @@ def main():
     iam_users = spark.read.parquet(str(BRONZE_DIR / "iam_users"))
     threat_intel = spark.read.parquet(str(BRONZE_DIR / "threat_intel"))
 
+    mitre_expr = create_map([lit(x) for x in chain(*MITRE_MAP())])
+
     cloudtrail_clean = (
         cloudtrail
         .withColumn("event_timestamp", to_timestamp(col("event_time")))
+        .withColumn("mitre_technique", mitre_expr.getItem(col("event_name")))
+        .withColumn("is_sensitive_event", col("event_name").isin(SENSITIVE_EVENTS))
         .withColumn(
             "risk_level",
             when(col("event_name").isin("DeleteTrail", "StopLogging", "CreateAccessKey"), "high")
