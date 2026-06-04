@@ -336,6 +336,34 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
 
     return attack_events, evaluation_labels
 
+def generate_benign_baseline_events(start_index: int = 9000):
+    now = datetime.now(timezone.utc)
+
+    baseline_events = []
+    baseline_users = {
+        "jsmith": "72.14.22.10",
+        "admin.user": "98.51.100.24",
+        "svc-ci-cd": "203.0.113.15",
+    }
+
+    normal_actions = {
+        "jsmith": ["ConsoleLogin", "ListBuckets"],
+        "admin.user": ["ConsoleLogin", "AssumeRole"],
+        "svc-ci-cd": ["AssumeRole", "PutObject"],
+    }
+
+    for user_name, normal_ip in baseline_users.items():
+        for i, event_name in enumerate(normal_actions[user_name]):
+            event_id = f"evt-{start_index + len(baseline_events):05d}"
+
+            baseline_events.append(
+                {
+                    "event_id": event_id,
+                    "event_time": (now - timedelta(days=3, hours=i)).isoformat(),
+                    "event_source"
+                }
+            )
+
 def generate_guardduty_findings(cloudtrail_events, num_findings: int = 40):
     suspicious_events = [
         event
