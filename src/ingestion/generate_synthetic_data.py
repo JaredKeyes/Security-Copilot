@@ -381,9 +381,47 @@ def generate_seeded_guardduty_findings(attack_events):
 
     finding_map = {
         "CreateAccessKey": {
-            "finding_type": "UnauthorizedAccess:IAMUser/"
-        }
+            "finding_type": "UnauthorizedAccess:IAMUser/InstanceCredentialExfiltration",
+            "severity": 8.5,
+            "title": "Possible credential compromise involving IAM access key creation",
+        },
+        "DeleteTrail": {
+            "finding_type": "Stealth:IAMUser/CloudTrailLoggingDisabled",
+            "severity": 8.7,
+            "title": "Possible CloudTrail tampering activity",
+        },
+        "AuthorizeSecurityGroupIngress": {
+            "finding_type": "Impact:EC2/MaliciousIPCaller",
+            "severity": 7.4,
+            "title": "Suspicious security group modification",
+        },
     }
+
+    for i, event in enumerate(key_events):
+        finding_info = finding_map[event["event_name"]]
+
+        findings.append(
+            {
+                "finding_id": f"gd-seeded-{i + 1:04d}",
+                "related_event_id": event["event_id"],
+                "finding_type": finding_info["finding_type"],
+                "severity": finding_info["severity"],
+                "title": finding_info["title"],
+                "description": (
+                    f"GuardDuty detected suspicious {event['event_name']} "
+                    f"activity involving principal {event['user_name']}."
+                ),
+                "user_name": event["user_name"],
+                "source_ip_address": event["source_ip_address"],
+                "resource_name": event["resource_name"],
+                "created_at": event["event_time"],
+                "account_id": event["account_id"],
+                "region": event["aws_region"],
+            }
+        )
+
+    return findings
+
 def generate_iam_users():
     rows = []
 
@@ -433,7 +471,11 @@ def main():
 
     cloudtrail_events.extend(attack_events)
 
-    guardduty_findings = generate_guardduty_findings(cloudtrail_events)
+    random_guardduty_findings = generate_guardduty_findings(cloudtrail_events)
+    seeded_guardduty_findings = generate_seeded_guardduty_findings(attack_events)
+
+    guardduty_findings = random_guardduty_findings + seeded_guardduty_findings
+
     iam_users = generate_iam_users()
     threat_intel = generate_threat_intel()
 
