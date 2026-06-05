@@ -36,7 +36,10 @@ def main():
     print("\n=== Investigation Timeline: jsmith ===")
     timeline.filter(col("user_name") == "jsmith").orderBy("event_timestamp").show(50, truncate=False)
 
-    
+    print("\n=== Investigation Timeline: admin.user ===")
+    timeline.filter(col("user_name") == "admin.user").orderBy("event_timestamp").show(50, truncate=False)
+
+    print("\n=== Investigation Timeline: ")
 
     spark.stop()
 
