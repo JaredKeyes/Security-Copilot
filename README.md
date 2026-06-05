@@ -6,7 +6,33 @@ This project builds a production-style GenAI security investigation assistant us
 
 The goal is to simulate how an enterprise security team could use AI to accelerate alert triage and incident investigation.
 
-## Milestone 1: Basic Data Platform
+## Milestone 1: Lakehouse Security Data Platform
+
+### What this milestone does
+
+- Generates synthetic cloud security data
+- Plants realistic attack chains into noisy background activity
+- Keeps ground-truth evaluation labels separate from model-accessible logs
+- Builds bronze, silver, and gold lakehouse-style layers
+- Produces analyst-ready security investigation tables
+
+### Important design choice
+
+The project intentionally separates investigation data from evaluation labels.
+
+The AI assistant will be allowed to use:
+
+- CloudTrail-style events
+- GuardDuty-style findings
+- IAM metadata
+- Threat intelligence
+- Enriched gold tables
+
+The AI assistant will not be allowed to use:
+
+- `evaluation_labels.json`
+
+That file acts as the hidden answer key for later evaluation.
 
 This milestone creates a lakehouse-style data foundation for security analytics.
 

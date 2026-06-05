@@ -6,3 +6,9 @@ delta-spark
 jupyter
 ipykernel
 pytest
+
+chromadb
+sentence-transformers
+langchain
+langchain-community
+langchain-chroma
