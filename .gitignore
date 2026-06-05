@@ -7,5 +7,6 @@ __pycache__/
 data/bronze/
 data/silver/
 data/gold/
+data/vector_store/
 
 .DS_Store

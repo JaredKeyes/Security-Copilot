@@ -74,3 +74,25 @@ python -m src.ingestion.build_bronze
 python -m src.transformations.build_silver
 python -m src.transformations.build_gold
 python -m src.queries.basic_investigation_queries
+
+
+## Milestone 2: RAG Knowledge Base
+
+This milestone adds a retrieval-augmented generation knowledge layer over security runbooks.
+
+### What it does
+
+- Creates Markdown runbooks for common cloud security investigation scenarios
+- Chunks runbook documents into retrievable sections
+- Generates local embeddings using Sentence Transformers
+- Stores embeddings in a local Chroma vector database
+- Retrieves relevant runbook context for analyst questions
+- Returns source metadata for traceability
+
+### Run Milestone 2
+
+```bash
+python -m src.retrieval.build_vector_index
+python -m src.retrieval.query_vector_index
+python -m src.retrieval.validate_retrieval
+python -m src.rag.basic_rag_answer
