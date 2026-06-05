@@ -39,7 +39,11 @@ def main():
     print("\n=== Investigation Timeline: admin.user ===")
     timeline.filter(col("user_name") == "admin.user").orderBy("event_timestamp").show(50, truncate=False)
 
-    print("\n=== Investigation Timeline: ")
+    print("\n=== Investigation Timeline: svc-ci-cd ===")
+    timeline.filter(col("user_name") == "svc-ci-cd").orderBy("event_timestamp").show(50, truncate=False)
+
+    print("\n=== Known Bad IP Timeline ===")
+    timeline.filter(col("is_known_bad_ip") == True).orderBy("event_timestamp").show(100, truncate=False)
 
     spark.stop()
 

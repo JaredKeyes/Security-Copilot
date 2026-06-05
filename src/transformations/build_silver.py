@@ -47,7 +47,7 @@ def main():
     iam_users = spark.read.parquet(str(BRONZE_DIR / "iam_users"))
     threat_intel = spark.read.parquet(str(BRONZE_DIR / "threat_intel"))
 
-    mitre_expr = create_map([lit(x) for x in chain(*MITRE_MAP())])
+    mitre_expr = create_map([lit(x) for x in chain(*MITRE_MAP.items())])
 
     cloudtrail_clean = (
         cloudtrail

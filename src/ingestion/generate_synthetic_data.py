@@ -56,6 +56,14 @@ EVENT_SOURCE_MAP = {
     "RunInstances": "ec2.amazonaws.com",
 }
 
+SENSITIVE_EVENTS = {
+    "CreateAccessKey",
+    "DeleteTrail",
+    "AuthorizeSecurityGroupIngress",
+    "StopLogging",
+    "AssumeRole",
+}
+
 def random_ip():
     if random.random() < 0.02:
         return random.choice(
@@ -328,7 +336,7 @@ def generate_seeded_attack_scenarios(start_index: int = 10000):
         user_type="ServiceAccount",
         region="us-west-2",
         resource_name="web-prod-instance",
-        scenario_id="scn-003"
+        scenario_id="scn-003",
         scenario_name="suspicious_infrastructure_change",
         attack_stage="execution",
         expected_reasoning="New compute instance launched after network exposure.",
@@ -366,7 +374,7 @@ def generate_benign_baseline_events(start_index: int = 9000):
                     "source_ip_address": normal_ip,
                     "user_name": user_name,
                     "user_type": "ServiceAccount" if user_name.startswith("svc-") else "IAMUser",
-                    "account_id": "123456789012"
+                    "account_id": "123456789012",
                     "resource_name": "prod-app-bucket" if event_name in ["ListBuckets", "PutObject"] else "admin-role",
                     "error_code": None,
                 }
@@ -378,7 +386,8 @@ def generate_guardduty_findings(cloudtrail_events, num_findings: int = 40):
     suspicious_events = [
         event
         for event in cloudtrail_events
-        if event["is_sensitive_event"] or event["source_ip_address"].startswith(("45.", "185.", "91.", "193."))
+        if event["event_name"] in SENSITIVE_EVENTS 
+        or event["source_ip_address"].startswith(("45.", "185.", "91.", "193."))
     ]
 
     findings = []

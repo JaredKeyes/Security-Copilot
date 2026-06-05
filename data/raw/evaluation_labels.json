@@ -1,6 +1,7 @@
 [
   {
     "event_id": "evt-10000",
+    "scenario_id": "scn-001",
     "scenario_name": "credential_compromise",
     "attack_stage": "initial_access",
     "expected_detection": true,
@@ -8,6 +9,7 @@
   },
   {
     "event_id": "evt-10001",
+    "scenario_id": "scn-001",
     "scenario_name": "credential_compromise",
     "attack_stage": "discovery",
     "expected_detection": true,
@@ -15,6 +17,7 @@
   },
   {
     "event_id": "evt-10002",
+    "scenario_id": "scn-001",
     "scenario_name": "credential_compromise",
     "attack_stage": "collection",
     "expected_detection": true,
@@ -22,6 +25,7 @@
   },
   {
     "event_id": "evt-10003",
+    "scenario_id": "scn-001",
     "scenario_name": "credential_compromise",
     "attack_stage": "persistence",
     "expected_detection": true,
@@ -29,6 +33,7 @@
   },
   {
     "event_id": "evt-10004",
+    "scenario_id": "scn-001",
     "scenario_name": "credential_compromise",
     "attack_stage": "privilege_escalation",
     "expected_detection": true,
@@ -36,6 +41,7 @@
   },
   {
     "event_id": "evt-10005",
+    "scenario_id": "scn-002",
     "scenario_name": "cloudtrail_tampering",
     "attack_stage": "privilege_escalation",
     "expected_detection": true,
@@ -43,6 +49,7 @@
   },
   {
     "event_id": "evt-10006",
+    "scenario_id": "scn-002",
     "scenario_name": "cloudtrail_tampering",
     "attack_stage": "defense_evasion",
     "expected_detection": true,
@@ -50,6 +57,7 @@
   },
   {
     "event_id": "evt-10007",
+    "scenario_id": "scn-002",
     "scenario_name": "cloudtrail_tampering",
     "attack_stage": "defense_evasion",
     "expected_detection": true,
@@ -57,6 +65,7 @@
   },
   {
     "event_id": "evt-10008",
+    "scenario_id": "scn-003",
     "scenario_name": "suspicious_infrastructure_change",
     "attack_stage": "privilege_escalation",
     "expected_detection": true,
@@ -64,6 +73,7 @@
   },
   {
     "event_id": "evt-10009",
+    "scenario_id": "scn-003",
     "scenario_name": "suspicious_infrastructure_change",
     "attack_stage": "network_exposure",
     "expected_detection": true,
@@ -71,6 +81,7 @@
   },
   {
     "event_id": "evt-10010",
+    "scenario_id": "scn-003",
     "scenario_name": "suspicious_infrastructure_change",
     "attack_stage": "execution",
     "expected_detection": true,
