@@ -32,15 +32,15 @@ DESTRUCTIVE_ACTION_PATTERNS = [
 ]
 
 CONTAINMENT_ACTION_PATTERNS = [
-    r"\bdisable\b",
-    r"\bdelete\b",
-    r"\bterminate\b",
-    r"\brevoke\b",
-    r"\brotate\b",
-    r"\bremove\b",
-    r"\bisolate\b",
-    r"\brestrict\b",
-    r"\bblock\b",
+    r"\bdisable(?:s|d|ing)?\b",
+    r"\bdelete(?:s|d|ing)?\b",
+    r"\bterminate(?:s|d|ing)?\b",
+    r"\brevoke(?:s|d|ing)?\b",
+    r"\brotate(?:s|d|ing)?\b",
+    r"\bremove(?:s|d|ing)?\b",
+    r"\bisolate(?:s|d|ing)?\b",
+    r"\brestrict(?:s|d|ing)?\b",
+    r"\bblock(?:s|d|ing)?\b",
 ]
 
 APPROVAL_LANGUAGE_PATTERNS = [
@@ -85,17 +85,17 @@ def mask_secrets(text: str) -> str:
     )
 
     masked = SECRET_PATTERNS["aws_secret_access_key"].sub(
-        lambda match: f"{match.group(1)}=***MASKED***",
+        lambda match: f"{match.group(1)}=***",
         masked,
     )
 
     masked = SECRET_PATTERNS["api_key"].sub(
-        lambda match: f"{match.group(1)}=***MASKED***",
+        lambda match: f"{match.group(1)}=***",
         masked,
     )
 
     masked = SECRET_PATTERNS["password"].sub(
-        lambda match: f"{match.group(1)}=***MASKED***",
+        lambda match: f"{match.group(1)}=***",
         masked,
     )
 
@@ -116,14 +116,14 @@ def detect_destructive_actions(text: str) -> List[str]:
     matches = []
 
     for pattern in DESTRUCTIVE_ACTION_PATTERNS:
-        if re.search(patern, text, flags=re.IGNORECASE):
+        if re.search(pattern, text, flags=re.IGNORECASE):
             matches.append(pattern)
 
     return matches
 
 
 def contains_containment_action(text: str) -> bool:
-    for pattern in APPROVAL_LANGUAGE_PATTERNS:
+    for pattern in CONTAINMENT_ACTION_PATTERNS:
         if re.search(pattern, text, flags=re.IGNORECASE):
             return True
 
@@ -187,7 +187,7 @@ def check_unsupported_conclusions(
         "passed": passed,
         "matches": matches,
         "message": (
-            "No unsupported certainy language found."
+            "No unsupported certainty language found."
             if passed
             else "Potentially unsupported certainy language found."
         ),
@@ -221,7 +221,7 @@ def apply_guardrails(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
             "message": (
                 "No unsafe destructive action language detected."
                 if len(destructive_matches) == 0
-                else "Unsafe destructive ation language detected."
+                else "Unsafe destructive action language detected."
             ),
         },
         "human_approval": approval_check,
