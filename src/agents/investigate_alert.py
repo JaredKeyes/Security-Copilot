@@ -2,7 +2,7 @@ import sys
 from typing import Any, Dict, List
 
 from src.agents.investigation_tools import build_investigation_context
-
+from src.guardrails.security_guardrails import apply_guardrails, format_guardrail_result
 
 def format_event(event: Dict[str, Any]) -> str:
     return (
@@ -261,7 +261,13 @@ def generate_investigation_report(finding_id: str) -> str:
         "require human approval."
     )
 
-    return "\n".join(report)
+    draft_report = "\n".join(report)
+
+    guardrail_result = apply_guardrails(draft_report, context)
+    guardrailed_report = guardrail_result["masked_report"]
+    guardrailed_report += format_guardrail_result(guardrail_result)
+
+    return guardrailed_report
 
 
 def main():
