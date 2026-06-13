@@ -145,3 +145,75 @@ def summarize_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     for result in results:
         for check_name, check_value in result.get("checks", {}).items():
             check_totals[check_name] = check_totals.get(check_name, 0) + 1
+
+            if check_value:
+                check_passes[check_name] = check_passes.get(check_name, 0) + 1
+
+    check_scores = {
+        check_name: {
+            "passed": check_passes.get(check_name, 0),
+            "total": total_count,
+            "score": check_passes.get(check_name, 0) / total_count if total_count else 0,
+        }
+        for check_name, total_count in check_total.items()
+    }
+
+    return {
+        "total_test_cases": total,
+        "passed_test_cases": passed,
+        "overall_score": passed / total if total else 0,
+        "check_scores": check_scores,
+    }
+
+def save_results(results: List[Dict[str, Any]], summary: Dict[str, Any]) -> None:
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    payload = {
+        "summary": summary,
+        "results": results,
+    }
+
+    with open(RESULTS_PATH, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, default=str)
+
+def main():
+    labels = load_evaluation_labels()
+    grouped_labels = group_labels_by_scenario(labels)
+
+    print("\nHidden evaluation labels loaded for scoring only.")
+    print(f"Label file: {EVALUATION_LABELS_PATH}")
+    print(f"Scenarios in hidden labels: {sorted(grouped.labels.keys())}")
+
+    results = []
+
+    for test_case in EVALUATION_TEST_CASES:
+        print("\n" + "=" * 100)
+        print(f"Evaluating finding: {test_case['finding_id']}")
+        print("=" * 100)
+
+        result = evaluate_test_case(test_case)
+        results.append(result)
+
+        print(f"Expected scenario: {result.get('expected_scenario')}")
+        print(f"Passed: {result.get('passed')}")
+        print(f"Guardrail status: {result.get('guardrail_status')}")
+        print(f"Expected runbook: {result.get('expected_runbook')}")
+        print(f"Retrieved runbooks: {result.get('retrieved_runbooks')}")
+        print(f"Keyword score: {result.get('keyword_result', {}).get('score')}")
+        print(f"Event score: {result.get('event_result', {}).get('score')}")
+        print("Checks:")
+        for check_name, check_value in result.get("checks", {}).items():
+            print(f"- {check_name}: {'PASS' if check_value else 'FAIL'}")
+
+    summary = summarize_results(results)
+    save_results(results, summary)
+
+    print("\n" + "=" * 100)
+    print("Evaluation Summary")
+    print("=" * 100)
+    print(json.dumps(summary, indent=2))
+    print(f"\nSaved results to: {RESULTS_PATH}")
+
+
+if __name__ == "__main__":
+    main()
