@@ -4,7 +4,7 @@ from typing import Any, Dict, List
 
 from src.agents.investigate_alert import generate_investigation_report
 from src.agents.investigation_tools import build_investigation_context
-from src.evaluation_questions import EVALUATION_TEST_CASES
+from src.evaluation.evaluation_questions import EVALUATION_TEST_CASES
 
 EVALUATION_LABELS_PATH = Path("data/raw/evaluation_labels.json")
 RESULTS_DIR = Path("data/gold/evaluation_results")
@@ -58,7 +58,7 @@ def get_retrieved_runbook_files(context: Dict[str, Any]) -> List[str]:
 
     for result in context.get("runbook_context", []):
         metadata = result.get("metadata", {})
-        file_name = metatdata.get("file_name")
+        file_name = metadata.get("file_name")
 
         if file_name:
             files.append(file_name)
@@ -139,8 +139,8 @@ def summarize_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
     total = len(results)
     passed = sum(1 for result in results if result.get("passed") is True)
 
-    checks_totals = {}
-    checks_passes = {}
+    check_totals = {}
+    check_passes = {}
 
     for result in results:
         for check_name, check_value in result.get("checks", {}).items():
@@ -155,7 +155,7 @@ def summarize_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
             "total": total_count,
             "score": check_passes.get(check_name, 0) / total_count if total_count else 0,
         }
-        for check_name, total_count in check_total.items()
+        for check_name, total_count in check_totals.items()
     }
 
     return {
@@ -182,7 +182,7 @@ def main():
 
     print("\nHidden evaluation labels loaded for scoring only.")
     print(f"Label file: {EVALUATION_LABELS_PATH}")
-    print(f"Scenarios in hidden labels: {sorted(grouped.labels.keys())}")
+    print(f"Scenarios in hidden labels: {sorted(grouped_labels.keys())}")
 
     results = []
 

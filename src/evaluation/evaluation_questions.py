@@ -20,7 +20,7 @@ EVALUATION_TEST_CASES = [
     },
     {
         "finding_id": "gd-seeded-0002",
-        "expected_scenario": "cloudtrail_tamering",
+        "expected_scenario": "cloudtrail_tampering",
         "expected_pattern_keywords": [
             "CloudTrail",
             "tampering",
@@ -48,6 +48,6 @@ EVALUATION_TEST_CASES = [
             "AuthorizeSecurityGroupIngress",
             "RunInstances",
         ],
-        "expected_runbook": "suspicious_Security_group_change.md",
+        "expected_runbook": "suspicious_security_group_change.md",
     },
 ]
