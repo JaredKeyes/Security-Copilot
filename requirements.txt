@@ -12,3 +12,8 @@ sentence-transformers
 langchain
 langchain-community
 langchain-chroma
+
+fastapi
+uvicorn
+streamlit
+requests

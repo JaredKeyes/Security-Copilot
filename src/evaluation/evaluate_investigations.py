@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 from src.agents.investigate_alert import generate_investigation_report
 from src.agents.investigation_tools import build_investigation_context
 from src.evaluation.evaluation_questions import EVALUATION_TEST_CASES
+from src.monitoring.monitoring_logger import log_evaluation_run
 
 EVALUATION_LABELS_PATH = Path("data/raw/evaluation_labels.json")
 RESULTS_DIR = Path("data/gold/evaluation_results")
@@ -207,6 +208,14 @@ def main():
 
     summary = summarize_results(results)
     save_results(results, summary)
+
+    log_evaluation_run(
+        total_test_cases=summary["total_test_cases"],
+        passed_test_cases=summary["passed_test_cases"],
+        overall_score=summary["overall_score"],
+        check_scores=summary["check_scores"],
+        results_path=str(RESULTS_PATH),
+    )
 
     print("\n" + "=" * 100)
     print("Evaluation Summary")
