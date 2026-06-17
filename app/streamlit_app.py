@@ -215,7 +215,7 @@ def main():
                     st.json(context.get("user_risk_summary", {}))
 
                     st.subheader("IP Reputation Summary")
-                    st.json(context.get("ip_repuatation_summary", {}))
+                    st.json(context.get("ip_reputation_summary", {}))
 
                     st.subheader("Runbook Context")
                     st.json(context.get("runbook_context", []))

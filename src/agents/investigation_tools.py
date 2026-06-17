@@ -6,8 +6,11 @@ from pyspark.sql.functions import col
 
 from src.retrieval.query_vector_index import retrieve_runbook_context
 
+from functools import lru_cache
+
 GOLD_DIR = Path("data/gold")
 
+@lru_cache(maxsize=1)
 def get_spark() -> SparkSession:
     return (
         SparkSession.builder
@@ -18,7 +21,7 @@ def get_spark() -> SparkSession:
 
 def dataframe_to_dicts(df: DataFrame, limit: int = 100) -> List[Dict[str, Any]]:
     """
-    Converts a Spark DataFrome into a list of dictionaries.
+    Converts a Spark DataFrame into a list of dictionaries.
     """
     return [row.asDict(recursive=True) for row in df.limit(limit).collect()]
 
@@ -151,37 +154,34 @@ def build_investigation_context(
     spark = get_spark()
     tables = load_gold_tables(spark)
 
-    try:
-        alert = lookup_alert(tables, finding_id)
+    alert = lookup_alert(tables, finding_id)
 
-        if not alert:
-            return {
-                "finding_id": finding_id,
-                "error": "Finding not found",
-            }
-
-        user_name = alert.get("user_name")
-        source_ip_address = alert.get("source_ip_address")
-
-        user_timeline = get_user_timeline(tables, user_name) if user_name else []
-        ip_timeline = get_ip_timeline(tables, source_ip_address) if source_ip_address else []
-        related_events = get_related_events_for_alert(tables, finding_id)
-        user_risk = get_user_risk_summary(tables, user_name) if user_name else None
-        ip_reputation = get_ip_reputation(tables, source_ip_address) if source_ip_address else None
-
-        runbook_query = build_runbook_query(alert)
-        runbook_context = retrieve_relevant_runbook(runbook_query, top_k=top_k_runbooks)
-
+    if not alert:
         return {
             "finding_id": finding_id,
-            "alert": alert,
-            "related_events": related_events,
-            "user_timeline": user_timeline,
-            "ip_timeline": ip_timeline,
-            "user_risk_summary": user_risk,
-            "ip_reputation_summary": ip_reputation,
-            "runbook_query": runbook_query,
-            "runbook_context": runbook_context,
+            "error": "Finding not found",
         }
-    finally:
-        spark.stop()
+
+    user_name = alert.get("user_name")
+    source_ip_address = alert.get("source_ip_address")
+
+    user_timeline = get_user_timeline(tables, user_name) if user_name else []
+    ip_timeline = get_ip_timeline(tables, source_ip_address) if source_ip_address else []
+    related_events = get_related_events_for_alert(tables, finding_id)
+    user_risk = get_user_risk_summary(tables, user_name) if user_name else None
+    ip_reputation = get_ip_reputation(tables, source_ip_address) if source_ip_address else None
+
+    runbook_query = build_runbook_query(alert)
+    runbook_context = retrieve_relevant_runbook(runbook_query, top_k=top_k_runbooks)
+
+    return {
+        "finding_id": finding_id,
+        "alert": alert,
+        "related_events": related_events,
+        "user_timeline": user_timeline,
+        "ip_timeline": ip_timeline,
+        "user_risk_summary": user_risk,
+        "ip_reputation_summary": ip_reputation,
+        "runbook_query": runbook_query,
+        "runbook_context": runbook_context,
+    }

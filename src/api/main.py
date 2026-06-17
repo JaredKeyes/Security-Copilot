@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -19,10 +20,17 @@ from src.monitoring.monitoring_logger import (
     INVESTIGATION_LOG_PATH,
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    get_spark()
+    yield
+    get_spark().stop()
+
 app = FastAPI(
     title="Enterprise Security GenAI Copilot API",
     description="API for investigating synthetic cloud security findings using lakehouse data, RAG, guardrails, evaluation, and monitoring.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 
@@ -47,34 +55,31 @@ def health_check() -> Dict[str, str]:
 def list_alerts(limit: int = 25) -> Dict[str, Any]:
     spark = get_spark()
 
-    try:
-        tables = load_gold_tables(spark)
-        findings = tables["findings"]
+    
+    tables = load_gold_tables(spark)
+    findings = tables["findings"]
 
-        result = findings.select(
-            "finding_id",
-            "finding_timestamp",
-            "severity",
-            "severity_label",
-            "finding_type",
-            "title",
-            "user_name",
-            "source_ip_address",
-            "resource_name",
-            "event_name",
-            "risk_level",
-            "is_known_bad_ip",
-        ).orderBy(col("severity").desc(), col("finding_timestamp").desc())
+    result = findings.select(
+        "finding_id",
+        "finding_timestamp",
+        "severity",
+        "severity_label",
+        "finding_type",
+        "title",
+        "user_name",
+        "source_ip_address",
+        "resource_name",
+        "event_name",
+        "risk_level",
+        "is_known_bad_ip",
+    ).orderBy(col("severity").desc(), col("finding_timestamp").desc())
 
-        alerts = dataframe_to_dicts(result, limit=limit)
+    alerts = dataframe_to_dicts(result, limit=limit)
 
-        return {
-            "count": len(alerts),
-            "alerts": alerts,
-        }
-
-    finally:
-        spark.stop()
+    return {
+        "count": len(alerts),
+        "alerts": alerts,
+    }
 
 
 @app.get("/alerts/{finding_id}")

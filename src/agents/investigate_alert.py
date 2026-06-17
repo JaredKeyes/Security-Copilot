@@ -13,7 +13,7 @@ def format_event(event: Dict[str, Any]) -> str:
         f"event={event.get('event_name')} | "
         f"resource={event.get('resource_name')} | "
         f"risk={event.get('risk_level')} | "
-        f"known_bad_ip={event.get("is_known_bad_ip")} | "
+        f"known_bad_ip={event.get('is_known_bad_ip')} | "
         f"mitre={event.get('mitre_technique')}"
     )
 
@@ -298,7 +298,7 @@ def generate_investigation_report(finding_id: str) -> str:
             report_length_chars=len(guardrailed_report),
             related_event_count=len(context.get("related_events", [])),
             user_timeline_count=len(context.get("user_timeline", [])),
-            ip_timeline_count=len(context.get("ip_tmieline", [])),
+            ip_timeline_count=len(context.get("ip_timeline", [])),
         )
 
         return guardrailed_report
@@ -319,7 +319,7 @@ def generate_investigation_report(finding_id: str) -> str:
             error=str(exc),
         )
     
-    raise
+        raise
 
 def main():
     if len(sys.argv) < 2:

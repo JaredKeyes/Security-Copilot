@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+from functools import lru_cache
 
 import chromadb
 from sentence_transformers import SentenceTransformer
@@ -9,12 +10,17 @@ COLLECTION_NAME = "security_runbooks"
 
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
+@lru_cache(maxsize=1)
+def get_embedding_model() -> SentenceTransformer:
+    return SentenceTransformer(EMBEDDING_MODEL_NAME)
+
+@lru_cache(maxsize=1)
 def get_collection():
     client = chromadb.PersistentClient(path=str(VECTOR_STORE_DIR))
     return client.get_collection(name=COLLECTION_NAME)
 
 def retrieve_runbook_context(query: str, top_k: int =4) -> List[dict]:
-    model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+    model = get_embedding_model()
     collection = get_collection()
 
     query_embedding = model.encode([query]).tolist()[0]
