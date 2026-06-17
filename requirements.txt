@@ -15,5 +15,6 @@ langchain-chroma
 
 fastapi
 uvicorn
+pydantic
 streamlit
 requests
