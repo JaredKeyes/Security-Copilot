@@ -1,4 +1,4 @@
-from Pathlib import Path
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
@@ -33,6 +33,14 @@ class InvestigationRequest(BaseModel):
 class InvestigationResponse(BaseModel):
     finding_id: str
     report: str
+
+
+@app.get("/health")
+def health_check() -> Dict[str, str]:
+    return {
+        "status": "ok",
+        "service": "enterprise-security-genai-copilot-api",
+    }
 
 
 @app.get("/alerts")
@@ -81,7 +89,7 @@ def get_alert_context(finding_id: str) -> Dict[str, Any]:
 
 @app.post("/investigate", response_model=InvestigationResponse)
 def investigate_alert(request: InvestigationRequest) -> InvestigationResponse:
-    report = generate_inestigation_report(request.finding_id)
+    report = generate_investigation_report(request.finding_id)
 
     if report.startswith("Investigation failed"):
         raise HTTPException(status_code=404, detail=report)

@@ -35,7 +35,7 @@ def format_alert_option(alert: Dict[str, Any]) -> str:
     )
 
 
-def load_alert() -> List[Dict[str, Any]]:
+def load_alerts() -> List[Dict[str, Any]]:
     data = api_get("/alerts?limit=50")
     return data.get("alerts", [])
 
@@ -45,7 +45,7 @@ def show_alert_details(alert: Dict[str, Any]) -> None:
 
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric("Finding ID", alert.get(finding_id))
+    col1.metric("Finding ID", alert.get("finding_id"))
     col2.metric("severity", str(alert.get("severity")))
     col3.metric("Severity Label", alert.get("severity_label"))
     col4.metric("Risk Level", alert.get("risk_level"))
@@ -108,7 +108,7 @@ def show_monitoring_summary() -> None:
         st.json(investigations.get("recent", []))
 
     with st.expander("Recent Errors"):
-        st.json(error.get("recent", []))
+        st.json(errors.get("recent", []))
 
 
 def main():
@@ -118,7 +118,7 @@ def main():
     )
 
     try:
-        health = api_get("/heath")
+        health = api_get("/health")
         st.success(f"API status: {health.get('status')}")
     except Exception as exc:
         st.error(
@@ -158,3 +158,74 @@ def main():
             selected_label
         )
         selected_alert = alerts[selected_index]
+
+        show_alert_details(selected_alert)
+
+        if st.button("Generate Investigation Report"):
+            finding_id = selected_alert["finding_id"]
+
+            with st.spinner(f"Investigating {finding_id}..."):
+                try:
+                    result = api_post(
+                        "/investigate",
+                        {
+                            "finding_id": finding_id,
+                        },
+                    )
+
+                    st.subheader("Investigation Report")
+                    st.markdown(result["report"])
+
+                except Exception as exc:
+                    st.error(f"Investigation failed: {exc}")
+
+    with tab2:
+        st.header("Alert Context")
+
+        try:
+            alerts = load_alerts()
+        except Exception as exc:
+            st.error(f"Could not load alerts: {exc}")
+            return
+
+        selected_label = st.selectbox(
+            "Choosing a finding for context",
+            options=[format_alert_option(alert) for alert in alerts],
+            key="context_alert_selector",
+        )
+
+        selected_index = [format_alert_option(alert) for alert in alerts].index(
+            selected_label
+        )
+        selected_alert = alerts[selected_index]
+        finding_id = selected_alert["finding_id"]
+
+        if st.button("Load Full Context"):
+            with st.spinner(f"Loading context for {finding_id}..."):
+                try:
+                    context = api_get(f"/alerts/{finding_id}")
+
+                    st.subheader("Alert")
+                    st.json(context.get("alert", {}))
+
+                    st.subheader("Related Events")
+                    st.json(context.get("related_events", []))
+
+                    st.subheader("User Risk Summary")
+                    st.json(context.get("user_risk_summary", {}))
+
+                    st.subheader("IP Reputation Summary")
+                    st.json(context.get("ip_repuatation_summary", {}))
+
+                    st.subheader("Runbook Context")
+                    st.json(context.get("runbook_context", []))
+
+                except Exception as exc:
+                    st.error(f"Could not load context: {exc}")
+
+    with tab3:
+        show_monitoring_summary()
+
+
+if __name__ == "__main__":
+    main()
