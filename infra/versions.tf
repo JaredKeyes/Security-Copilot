@@ -13,3 +13,14 @@ provider "aws" {
     profile = var.aws_profile
     allowed_account_ids = [var.demo_account_id]
 }
+
+terraform {
+    backend "s3" {
+        bucket = "security-copilot-tfstate-jaredk"
+        key = "security-copilot/terraform.tfstate"
+        region = "us-east-1"
+        profile = "test"
+        encrypt = true
+        use_lockfile = true
+    }
+}
