@@ -10,3 +10,8 @@ data/gold/
 data/vector_store/
 
 .DS_Store
+
+infra/.terraform/
+infra/*.tfstate
+infra/.tfstate.backup
+infra/*.tfvars

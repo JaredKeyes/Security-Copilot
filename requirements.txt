@@ -9,6 +9,7 @@ pytest
 
 chromadb
 sentence-transformers
+anthropic
 langchain
 langchain-community
 langchain-chroma
@@ -16,5 +17,6 @@ langchain-chroma
 fastapi
 uvicorn
 pydantic
+boto3
 streamlit
 requests
