@@ -1,0 +1,8 @@
+anthropic
+boto3
+fastapi
+uvicorn
+pydantic
+mangum
+chromadb
+sentence-transformers

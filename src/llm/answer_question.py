@@ -59,4 +59,6 @@ def answer_question(
         system=[{"type": "text", "text": ASK_SYSTEM, "cache_control": {"type": "ephemeral"}}],
         messages=messages,
     )
-    return next((b.text for b in resp.content if b.type == "text"), "")
+    text = next((b.text for b in resp.content if b.type == "text"), "")
+    used = resp.usage.input_tokens + resp.usage.output_tokens
+    return text, used
