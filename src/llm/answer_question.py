@@ -2,7 +2,6 @@ import json
 from typing import Any, Dict, List
 
 from src.llm.client import get_client
-from src.retrieval.query_vector_index import retrieve_runbook_context
 
 ASK_MODEL = "claude-haiku-4-5"
 
@@ -32,6 +31,7 @@ def answer_question(
 
     client = get_client()
     grounding = json.dumps(context, sort_keys=True, default=str)
+    from src.retrieval.query_vector_index import retrieve_runbook_context
     runbooks = retrieve_runbook_context(question, top_k=3)
 
     messages = [
@@ -41,7 +41,7 @@ def answer_question(
                 {
                     "type": "text",
                     "text": (
-                        "Investigation context (JSON):n" + grounding +
+                        "Investigation context (JSON):\n" + grounding +
                         "\n\nRelevant runbook excerpts:\n" +
                         json.dumps(runbooks, default=str)
                     ),

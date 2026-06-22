@@ -3,19 +3,22 @@ import os
 
 import boto3
 from botocore.exceptions import ClientError
+from functools import lru_cache
 
 BUDGET_TABLE = os.environ.get("BUDGET_TABLE", "demo-budget")
 DAILY_TOKEN_CAP = int(os.environ.get("DAILY_TOKEN_CAP", "2000000"))
 ESTIMATE_TOKENS = int(os.environ.get("ASK_ESTIMATE_TOKENS", "5000"))
 
-_ddb = boto3.client("dynamodb")
+@lru_cache(maxsize=1)
+def _ddb(): 
+    return boto3.client("dynamodb")
 
 def _today() -> str:
     return dt.datetime.now(dt.timezone.utc).date().isoformat()
 
 def reserve(tokens: int = ESTIMATE_TOKENS) -> bool:
     try:
-        _ddb.update_item(
+        _ddb().update_item(
             TableName=BUDGET_TABLE,
             Key={"day": {"S": _today()}},
             UpdateExpression="ADD tokens :t",
@@ -35,15 +38,15 @@ def reconcile(estimated: int, actual: int) -> None:
     delta = actual - estimated
     if delta == 0:
         return
-    _ddb.update_item(
+    _ddb().update_item(
         TableName=BUDGET_TABLE,
         Key={"day": {"S": _today()}},
-        UpdateExpression="Add tokens :d",
+        UpdateExpression="ADD tokens :d",
         ExpressionAttributeValues={":d": {"N": str(delta)}},
     )
 
 def remaining() -> int:
-    resp = _ddb.get_item(
+    resp = _ddb().get_item(
         TableName=BUDGET_TABLE,
         Key={"day": {"S": _today()}},
         ConsistentRead=True,

@@ -23,3 +23,36 @@ variable "budget_table_name" {
     type = string
     default = "demo-budget"
 }
+
+variable "lambda_function_name" {
+    type = string
+    default = "security-copilot-api"
+}
+
+variable "ecr_repo_name" {
+    type = string
+    default = "security-copilot"
+}
+
+variable "image_tag" {
+    description = "Tag of the serving image pushed to ECR"
+    type = string
+    default = "dev"
+}
+
+variable "anthropic_secret_name" {
+    description = "Secrets Manager secret holding the Anthropic API key (value set out-of-band)"
+    type = string
+    default = "security-copilot/anthropic-api-key"
+}
+
+variable "daily_token_cap" {
+    type = number
+    default = 2000000
+}
+
+variable "cors_allow_origins" {
+    description = "Allowed CORS origins; lock to the portfolio/demo domain in prod"
+    type = list(string)
+    default = [ "*" ]
+}

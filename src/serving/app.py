@@ -13,7 +13,7 @@ from src.serving import budget
 REPORTS_BUCKET = os.environ["REPORTS_BUCKET"]
 REPORTS_PREFIX = "reports"
 
-app = FastAPI(title="Security-Copilot Deme API", version="1.0.0")
+app = FastAPI(title="Security-Copilot Demo API", version="1.0.0")
 
 @lru_cache(maxsize=1)
 def _s3():
@@ -76,5 +76,5 @@ def ask(req: AskRequest) -> Dict[str, Any]:
 try:
     from mangum import Mangum
     handler = Mangum(app)
-ecept ImportError:
+except ImportError:
     handler = None
