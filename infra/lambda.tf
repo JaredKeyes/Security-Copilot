@@ -13,6 +13,7 @@ resource "aws_lambda_function" "api" {
             BUDGET_TABLE = aws_dynamodb_table.budget.name
             ANTHROPIC_SECRET_ARN = aws_secretsmanager_secret.anthropic.arn
             DAILY_TOKEN_CAP = tostring(var.daily_token_cap)
+            VECTOR_STORE_DIR = "/tmp/vector_store"
         }
     }
 }

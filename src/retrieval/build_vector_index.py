@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List
 
 import chromadb
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
 RUNBOOK_DIR = Path("data/raw/runbooks")
 VECTOR_STORE_DIR = Path("data/vector_store")
@@ -50,7 +50,7 @@ def build_index():
     if not documents:
         raise FileNotFoundError(f"No markdown runbooks found in {RUNBOOK_DIR}")
 
-    model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+    model = TextEmbedding(model_name=EMBEDDING_MODEL_NAME)
 
     client = chromadb.PersistentClient(path=str(VECTOR_STORE_DIR))
 
@@ -81,7 +81,7 @@ def build_index():
                 }
             )
 
-    embeddings = model.encode(texts).tolist()
+    embeddings = [e.tolist() for e in model.embed(texts)]
 
     collection.add(
         ids=ids,

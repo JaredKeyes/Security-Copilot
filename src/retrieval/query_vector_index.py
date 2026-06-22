@@ -1,29 +1,35 @@
+import os
+import shutil
 from pathlib import Path
 from typing import List
 from functools import lru_cache
 
 import chromadb
-from sentence_transformers import SentenceTransformer
+from fastembed import TextEmbedding
 
-VECTOR_STORE_DIR = Path("data/vector_store")
+BAKED_STORE_DIR = Path("data/vector_store")
+RUNTIME_STORE_DIR = Path(os.environ.get("VECTOR_STORE_DIR", str(BAKED_STORE_DIR)))
+
 COLLECTION_NAME = "security_runbooks"
-
 EMBEDDING_MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+EMBEDDING_CACHE_DIR = os.environ.get("FASTEMBED_CACHE_DIR")
 
 @lru_cache(maxsize=1)
-def get_embedding_model() -> SentenceTransformer:
-    return SentenceTransformer(EMBEDDING_MODEL_NAME)
+def get_embedding_model() -> TextEmbedding:
+    return TextEmbedding(model_name=EMBEDDING_MODEL_NAME, cache_dir=EMBEDDING_CACHE_DIR)
 
 @lru_cache(maxsize=1)
 def get_collection():
-    client = chromadb.PersistentClient(path=str(VECTOR_STORE_DIR))
+    if RUNTIME_STORE_DIR != BAKED_STORE_DIR and not RUNTIME_STORE_DIR.exists():
+        shutil.copytree(BAKED_STORE_DIR, RUNTIME_STORE_DIR)
+    client = chromadb.PersistentClient(path=str(RUNTIME_STORE_DIR))
     return client.get_collection(name=COLLECTION_NAME)
 
 def retrieve_runbook_context(query: str, top_k: int =4) -> List[dict]:
     model = get_embedding_model()
     collection = get_collection()
 
-    query_embedding = model.encode([query]).tolist()[0]
+    query_embedding = next(iter(model.embed([query]))).tolist()
 
     results = collection.query(
         query_embeddings=[query_embedding],

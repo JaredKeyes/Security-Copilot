@@ -8,7 +8,7 @@ ipykernel
 pytest
 
 chromadb
-sentence-transformers
+fastembed
 anthropic
 langchain
 langchain-community
