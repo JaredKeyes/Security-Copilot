@@ -1,5 +1,6 @@
 import re
 from typing import Any, Dict, List
+import json
 
 SECRET_PATTERNS = {
     "aws_access_key_id": re.compile(r"\b(AKIA|ASIA)[A-Z0-9]{16}\b"),
@@ -64,6 +65,11 @@ UNSUPPORTED_CERTAINTY_PATTERNS = [
     r"\bwas breached\b",
     r"\bis compromised\b",
 ]
+
+IP_PATTERN = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
+FINDING_ID_PATTERN = re.compile(r"\bgd-seeded-\d+\b")
+SERVICE_ACCOUNT_PATTERN = re.compile(r"\bsvc-[a-z0-9-]+\b", re.IGNORECASE)
+DOTTED_HANDLE_PATTERN = re.compile(r"\b[a-z]{2,}\.[a-z]{2,}\b", re.IGNORECASE)
 
 
 def detect_secret_patterns(text: str) -> List[str]:
@@ -193,6 +199,56 @@ def check_unsupported_conclusions(
         ),
     }
 
+def extract_report_entities(report: str) -> Dict[str, List[str]]:
+    ips = sorted(set(IP_PATTERN.findall(report)))
+    finding_ids = sorted(set(FINDING_ID_PATTERN.findall(report)))
+    user_names = sorted(
+        set(SERVICE_ACCOUNT_PATTERN.findall(report))
+        | set(DOTTED_HANDLE_PATTERN.findall(report))
+    )
+    return {"ips": ips, "finding_ids": finding_ids, "user_names": user_names}
+
+def entity_coverage(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    entities = extract_report_entities(report)
+    serialized = json.dumps(context, sort_keys=True, default=str).lower()
+
+    mentioned: List[str] = []
+    in_context: List[str] = []
+    missing: List[str] = []
+
+    for values in entities.values():
+        for value in values:
+            mentioned.append(value)
+            if value.lower() in serialized:
+                in_context.append(value)
+            else:
+                missing.append(value)
+
+    total = len(mentioned)
+    coverage_ratio = len(in_context) / total if total else 1.0
+
+    return {
+        "entities": entities,
+        "mentioned": mentioned,
+        "in_context": in_context,
+        "missing": missing,
+        "coverage_ratio": coverage_ratio,
+    }
+
+def check_citation_coverage(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
+    coverage = entity_coverage(report, context)
+    passed = len(coverage["missing"]) == 0
+
+    return {
+        "passed": passed,
+        "missing_entities": coverage["missing"],
+        "coverage_ratio": coverage["coverage_ratio"],
+        "message": (
+            "All cited entities appear in the evidence context."
+            if passed
+            else f"Entities not found in evidence (possible fabrication): {coverage['missing']}"
+        ),
+    }
 
 def apply_guardrails(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
     original_secret_findings = detect_secret_patterns(report)

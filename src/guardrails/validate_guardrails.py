@@ -4,6 +4,8 @@ from src.guardrails.security_guardrails import (
     detect_secret_patterns,
     mask_secrets,
     require_human_approval,
+    check_citation_coverage,
+    extract_report_entities,
 )
 
 def print_result(name: str, passed: bool):
@@ -102,6 +104,44 @@ def test_full_guardrail_pass():
 
     return result["passed"] is True and result["status"] == "PASS"
 
+def test_entity_extraction():
+    report = "IP 10.0.0.5, finding gd-seeded-0042, users svc-ci-cd and admin.user."
+    entities = extract_report_entities(report)
+    print("\n=== Entity Extraction ===")
+    print(entities)
+    return (
+        "10.0.0.5" in entities["ips"]
+        and "gd-seeded-0042" in entities["finding_ids"]
+        and "svc-ci-cd" in entities["user_names"]
+        and "admin.user" in entities["user_names"]
+    )
+
+def test_citation_coverage_pass():
+    report = "Finding gd-seeded-0001 involved source IP 198.51.100.7 and user jsmith."
+    context = {
+        "alert": {
+            "finding_id": "gd-seeded-0001",
+            "source_ip_address": "198.51.100.7",
+            "user_name": "jsmith",
+        }
+    }
+    result = check_citation_coverage(report, context)
+    print("\n=== Citation Coverage Pass ===")
+    print(result)
+    return result["passed"] is True and result["coverage_ratio"] == 1.0
+
+def test_citation_coverage_fabricated_ip():
+    report = "The attacker pivoted from 203.0.113.99 against gd-seeded-0001."
+    context = {"alert": {"finding_id": "gd-seeded-0001", "source_ip_address": "198.51.100.7"}}
+    result = check_citation_coverage(report, context)
+    print("\n=== Citation Coverage Fabricated IP ===")
+    print(result)
+    return (
+        result["passed"] is False
+        and "203.0.113.99" in result["missing_entities"]
+        and result["coverage_ratio"] < 1.0
+    )
+
 def main():
     tests = [
         ("Secret masking", test_secret_masking),
@@ -109,7 +149,10 @@ def main():
         ("Human approval failure", test_human_approval_failure),
         ("Human approval pass", test_human_approval_pass),
         ("Full guardrail review required", test_full_guardrail_review_required),
-        ("Full guardrail pass", test_full_guardrail_pass)
+        ("Full guardrail pass", test_full_guardrail_pass),
+        ("Entity extraction", test_entity_extraction),
+        ("Citation coverage pass", test_citation_coverage_pass),
+        ("Citation coverage fabricated IP", test_citation_coverage_fabricated_ip),
     ]
 
     passed = 0
