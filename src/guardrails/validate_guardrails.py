@@ -6,6 +6,7 @@ from src.guardrails.security_guardrails import (
     require_human_approval,
     check_citation_coverage,
     extract_report_entities,
+    groundedness_score,
 )
 
 def print_result(name: str, passed: bool):
@@ -142,6 +143,29 @@ def test_citation_coverage_fabricated_ip():
         and result["coverage_ratio"] < 1.0
     )
 
+def test_full_guardrail_flags_fabrication():
+    report = "Based on evidence for gd-seeded-0001, traffic came from 203.0.113.99."
+    context = {
+        "alert": {"finding_id": "gd-seeded-0001", "source_ip_address": "198.51.100.7"},
+        "runbook_context": [{"metadata": {"file_name": "x.md", "chunk_index": 0}}],
+    }
+    result = apply_guardrails(report, context)
+    print("\n=== Full Guardrail Flags Fabrication ===")
+    print(result["status"], result["checks"]["citation_coverage"])
+    return (
+        result["status"] == "REVIEW_REQUIRED"
+        and result["checks"]["citation_coverage"]["passed"] is False
+    )
+
+def test_groundedness_score():
+    context = {"alert": {"finding_id": "gd-seeded-0001", "source_ip_address": "198.51.100.7"}}
+    good = "gd-seeded-0001 from 198.51.100.7"
+    bad = "gd-seeded-0001 from 198.51.100.7 and also 203.0.113.99"
+    print("\n=== Groundedness Score ===")
+    print("good", groundedness_score(good, context), "bad", groundedness_score(bad, context))
+    return groundedness_score(good, context) == 1.0 and groundedness_score(bad, context) < 1.0
+
+
 def main():
     tests = [
         ("Secret masking", test_secret_masking),
@@ -153,6 +177,8 @@ def main():
         ("Entity extraction", test_entity_extraction),
         ("Citation coverage pass", test_citation_coverage_pass),
         ("Citation coverage fabricated IP", test_citation_coverage_fabricated_ip),
+        ("Full guardrail flags fabrication", test_full_guardrail_flags_fabrication),
+        ("Groundedness score", test_groundedness_score),
     ]
 
     passed = 0

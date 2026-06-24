@@ -235,6 +235,9 @@ def entity_coverage(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
         "coverage_ratio": coverage_ratio,
     }
 
+def groundedness_score(report: str, context: Dict[str, Any]) -> float:
+    return entity_coverage(report, context)["coverage_ratio"]
+
 def check_citation_coverage(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
     coverage = entity_coverage(report, context)
     passed = len(coverage["missing"]) == 0
@@ -259,6 +262,7 @@ def apply_guardrails(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
     approval_check = require_human_approval(masked_report)
     runbook_check = check_runbook_sources(context)
     unsupported_check = check_unsupported_conclusions(masked_report, context)
+    citation_check = check_citation_coverage(masked_report, context)
 
     checks = {
         "secret_leakage": {
@@ -283,6 +287,7 @@ def apply_guardrails(report: str, context: Dict[str, Any]) -> Dict[str, Any]:
         "human_approval": approval_check,
         "runbook_sources": runbook_check,
         "unsupported_conclusions": unsupported_check,
+        "citation_coverage": citation_check,
     }
 
     passed = all(check["passed"] for check in checks.values())
