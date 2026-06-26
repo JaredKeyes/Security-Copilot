@@ -73,6 +73,9 @@ def log_evaluation_run(
     overall_score: float,
     check_scores: Dict[str, Any],
     results_path: str,
+    groundedness_mean: Optional[float] = None,
+    judge_pass_rate: Optional[float] = None,
+    meta_eval_agreement: Optional[float] = None,
 ) -> None:
     payload = {
         "timestamp": utc_now_iso(),
@@ -81,6 +84,9 @@ def log_evaluation_run(
         "overall_score": overall_score,
         "check_scores": check_scores,
         "results_path": results_path,
+        "groundedness_mean": groundedness_mean,
+        "judge_pass_rate": judge_pass_rate,
+        "meta_eval_agreement": meta_eval_agreement,
     }
 
     append_jsonl(EVALUATION_LOG_PATH, payload)
