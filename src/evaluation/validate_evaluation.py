@@ -1,6 +1,11 @@
 import json
 from pathlib import Path
 
+from src.evaluation.evaluate_investigations import (
+    compute_meta_eval_agreement,
+    scenario_identified,
+)
+
 EVALUATION_LABELS_PATH = Path("data/raw/evaluation_labels.json")
 RESULTS_PATH = Path("data/gold/evaluation_results/investigation_evaluation_results.json")
 
@@ -60,12 +65,28 @@ def check_labels_not_used_outside_evaluation() -> bool:
 def print_check(name: str, passed: bool):
     print(f"{name}: {'PASS' if passed else 'FAIL'}")
 
+def test_scenario_identified():
+    tc = {"expected_pattern_keywords": ["security group", "infrastructure", "ec2"]}
+    assert scenario_identified("Modified the security group and infrastructure on the EC2 host.", tc) is True
+    assert scenario_identified("Nothing relevant here.", tc) is False
+    return True
+
+def test_meta_eval_agreement():
+    results = [
+        {"judge": {"correctness": 5}, "scenario_present": True},
+        {"judge": {"correctness": 2}, "scenario_present": False},
+        {"judge": {"correctness": 5}, "scenario_present": False},
+    ]
+    return abs(compute_meta_eval_agreement(results) - (2 / 3)) < 1e-9
+
 def main():
     checks = {
         "evaluation_labels_exists": check_evaluation_labels_exist(),
         "evaluation_results_exists": check_results_exist(),
         "evaluation_results_shape_valid": check_results_shape(),
         "labels_not_used_outside_evaluation": check_labels_not_used_outside_evaluation(),
+        "scenario_identified": test_scenario_identified(),
+        "meta_eval_agreement": test_meta_eval_agreement(),
     }
 
     print("\n" + "=" * 100)
