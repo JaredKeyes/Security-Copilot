@@ -52,7 +52,8 @@ def get_alert(finding_id: str) -> Dict[str, Any]:
     if record is None:
         raise HTTPException(404, "Finding not found")
     return {"finding_id": finding_id, "report": record["report"],
-            "model": record["model"], "generated_at": record["generated_at"]}
+            "model": record["model"], "generated_at": record["generated_at"],
+            "groundedness": record.get("groundedness")}
 
 @app.post("/ask")
 def ask(req: AskRequest) -> Dict[str, Any]:
