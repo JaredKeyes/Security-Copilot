@@ -9,6 +9,7 @@ TextEmbedding(model_name='sentence-transformers/all-MiniLM-L6-v2', cache_dir='/v
 
 COPY src/llm/client.py                      src/llm/client.py
 COPY src/llm/answer_question.py             src/llm/answer_question.py
+COPY src/guardrails/security_guardrails.py  src/guardrails/security_guardrails.py
 COPY src/retrieval/query_vector_index.py    src/retrieval/query_vector_index.py
 COPY src/serving/                           src/serving/
 
