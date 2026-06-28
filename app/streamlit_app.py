@@ -98,6 +98,12 @@ def show_monitoring_summary() -> None:
         col2.metric("Passed Test Cases", latest_eval.get("passed_test_cases"))
         col3.metric("Total Test Cases", latest_eval.get("total_test_cases"))
 
+        col4, col5, col6 = st.columns(3)
+        
+        col4.metric("Groundedness (mean)", latest_eval.get("groundedness_mean"))
+        col5.metric("Judge Pass Rate", latest_eval.get("judge_pass_rate"))
+        col6.metric("Judge vs Truth Agreement", latest_eval.get("meta_eval_agreement"))
+
         with st.expander("Evaluation Check Scores"):
             st.json(latest_eval.get("check_scores", {}))
 
