@@ -9,6 +9,7 @@ from pydantic import BaseModel
 
 from src.llm.answer_question import answer_question, QuestionRejected
 from src.serving import budget
+from src.guardrails.security_guardrails import check_citation_coverage
 
 REPORTS_BUCKET = os.environ["REPORTS_BUCKET"]
 REPORTS_PREFIX = "reports"
@@ -70,9 +71,12 @@ def ask(req: AskRequest) -> Dict[str, Any]:
     except QuestionRejected as e:
         raise HTTPException(400, str(e))
 
+    coverage = check_citation_coverage(answer, record["context"])
     budget.reconcile(budget.ESTIMATE_TOKENS, used)
     return {"answer": answer, "budget_exceeded": False,
-            "remaining_tokens": budget.remaining()}
+            "remaining_tokens": budget.remaining(),
+            "review_required": not coverage["passed"],
+            "uncited_entities": coverage["missing_entities"]}
 
 try:
     from mangum import Mangum
