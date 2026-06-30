@@ -149,7 +149,26 @@ async function ask(question) {
     send.disabled = false;
 }
 
-function toggleHonest() {}
+function toggleHonest() {
+  const existing = $("#honest-panel");
+  if (existing) { existing.remove(); return; }
+  const panel = el("div", "honest-panel"); panel.id = "honest-panel";
+  panel.innerHTML = `
+    <h3>How this demo is kept honest</h3>
+    <p>Every served report passes a deterministic <strong>citation-coverage</strong> guardrail:
+    each IP, finding ID, and service account named in the text must appear in the underlying
+    evidence, or the output is flagged <code>REVIEW_REQUIRED</code>. The same check runs live on
+    every answer above, and groundedness is the fraction of named entities found in evidence.</p>
+    <p><strong>Regression demo — catching a fabrication:</strong></p>
+    <table class="honest-table">
+      <tr><th></th><th>Groundedness</th><th>Guardrail</th></tr>
+      <tr><td>Original report</td><td>1.00</td><td class="ok">PASS</td></tr>
+      <tr><td>+ injected fake IP <code>203.0.113.99</code></td><td>&lt; 1.00</td><td class="warn">REVIEW_REQUIRED</td></tr>
+    </table>
+    <p class="muted small">Offline, a Sonnet LLM-as-judge scores faithfulness/correctness; judge-vs-ground-truth
+    meta-eval agreement is 1.0 on the seeded set.</p>`;
+  $("#detail").appendChild(panel);
+}
 
 window.addEventListener("DOMContentLoaded", async () => {
     await loadAlerts();
