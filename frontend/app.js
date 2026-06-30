@@ -95,6 +95,60 @@ function buildChat() {
         return chat;
 }
 
+function addTurn(role, node) {
+    const t = $("#transcript");
+    const turn = el("div", "turn turn-" + role);
+    turn.appendChild(node);
+    t.appendChild(turn);
+    t.scrollTop = t.scrollHeight;
+    return turn;
+}
+
+async function ask(question) {
+    addTurn("user", el("div", "bubble", question));
+    const thinking = addTurn("ai",
+        el("div", "bubble thinking", "Investigating... (the first question can take ~15-20s while the model warms up)"));
+    const send = $(".send"); send.disabled = true;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    let data;
+    try {
+        data = await api("/ask", {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ finding_id: state.findingId, question, history: state.history }),
+            signal: controller.signal,
+        });
+    }   catch (e) {
+        clearTimeout(timer); thinking.remove();
+        const msg = e.name === "AbortError" ? "That took too long - please try again."
+            : e.status === 400 ? e.message
+            : "Something went wrong - please try again.";
+        addTurn("ai", el("div", "bubble error", msg));
+        send.disabled = false; return;
+    }
+    clearTimeout(timer); thinking.remove();
+
+    if (data.budget_exceeded) {
+        addTurn("ai", el("div", "bubble budget", "Daily demo budget reached - showing the precomputed report instead."));
+        send.disabled = false; return;
+    }
+
+    const bubble = el("div", "bubble");
+    renderMarkdown(bubble, data.answer);
+    if (data.review_required) {
+        const pill = el("span", "pill pill-warn", "⚠ REVIEW_REQUIRED");
+        pill.title = "Entities not found in the evidence: " + (data.uncited_entities || []).join(", ");
+        bubble.appendChild(pill);
+    }
+    addTurn("ai", bubble);
+
+    state.history.push({ role: "user", context: question });
+    state.history.push({ role: "assistant", context: data.answer });
+    state.history = state.history.slice(-MAX_HISTORY);
+    send.disabled = false;
+}
+
 function toggleHonest() {}
 
 window.addEventListener("DOMContentLoaded", async () => {
