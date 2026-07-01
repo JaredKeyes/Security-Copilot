@@ -4,7 +4,7 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional
 
 import boto3
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel
 
 from src.llm.answer_question import answer_question, QuestionRejected
@@ -15,6 +15,10 @@ REPORTS_BUCKET = os.environ["REPORTS_BUCKET"]
 REPORTS_PREFIX = "reports"
 
 app = FastAPI(title="Security-Copilot Demo API", version="1.0.0")
+
+@app.options("/{full_path:path}")
+def preflight(full_path: str) -> Response:
+    return Response(status_code=204)
 
 @lru_cache(maxsize=1)
 def _s3():
