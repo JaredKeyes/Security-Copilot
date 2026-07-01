@@ -71,7 +71,7 @@ function renderDetail(rec) {
     if (pill) head.appendChild(pill);
     head.appendChild(el("span", "meta", rec.model || ""));
     const honest = el("button", "link", "How this is kept honest");
-    honest.onClick = toggleHonest;
+    honest.onclick = toggleHonest;
     head.appendChild(honest);
     detail.appendChild(head);
 
@@ -143,8 +143,8 @@ async function ask(question) {
     }
     addTurn("ai", bubble);
 
-    state.history.push({ role: "user", context: question });
-    state.history.push({ role: "assistant", context: data.answer });
+    state.history.push({ role: "user", content: question });
+    state.history.push({ role: "assistant", content: data.answer });
     state.history = state.history.slice(-MAX_HISTORY);
     send.disabled = false;
 }
