@@ -11,6 +11,7 @@ from anthropic.types.messages.batch_create_params import Request
 from src.agents.investigation_tools import build_investigation_context, get_spark, load_gold_tables
 from src.llm.client import MODEL, get_client
 from src.llm.generate_report import SYSTEM_PROMPT
+from src.guardrails.security_guardrails import groundedness_score
 
 REPORTS_BUCKET = os.environ["REPORTS_BUCKET"]
 REPORTS_PREFIX = "reports"
@@ -97,6 +98,7 @@ def run() -> None:
                 "context": contexts[fid],
                 "model": msg.model,
                 "generated_at": now,
+                "groundedness": groundedness_score(report, contexts[fid]),
             }, default=str).encode("utf-8"),
             ContentType="application/json",
         )

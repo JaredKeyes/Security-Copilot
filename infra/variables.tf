@@ -56,3 +56,11 @@ variable "cors_allow_origins" {
     type = list(string)
     default = [ "*" ]
 }
+
+variable "spa_bucket_name" {
+    type = string
+}
+
+variable "spa_domain_name" {
+    type = string
+}

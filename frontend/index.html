@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Security-Copilot - Investigation Demo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">🛡 Security-Copilot <span class="muted">· Investigation Demo</span></div>
+        <div class="muted small">precomputed reports · live grounded Q&amp;A</div>
+    </header>
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-head">ALERTS · <span id="alert-count">...</span></div>
+            <div id="alert-list"></div>
+        </aside>
+        <main id="detail" class="detail">
+            <div class="empty">Select an alert to view its investigation report.</div>
+        </main>
+    </div>
+    <script src="vendor/marked.min.js"></script>
+    <script src="vendor/purify.min.js"></script>
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+window.API_BASE = "https://sil3sc3714.execute-api.us-east-1.amazonaws.com";
